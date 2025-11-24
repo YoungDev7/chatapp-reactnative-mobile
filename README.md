@@ -2,8 +2,6 @@
 
 A cross-platform mobile chat application built with React Native and Expo. Features JWT authentication, real-time messaging via WebSocket, and a modern mobile-first design with native platform capabilities.
 
-![Application Architecture](documentation/architecture_diagram.png)
-
 ## 🚀 Technologies Used
 
 - **React Native** - Cross-platform mobile framework
@@ -303,25 +301,6 @@ Additional documentation available in related repositories:
 
 - [Backend Repository](https://github.com/YoungDev7/chatapp-spring-backend) - Spring Boot backend
 - [Frontend Repository](https://github.com/YoungDev7/chatapp-react-frontend) - React web frontend
-
-## 📝 TODO
-
-- [ ] Implement authentication API calls
-- [ ] Add WebSocket connection for real-time messaging
-- [ ] Create individual chat view screen
-- [ ] Implement message sending functionality
-- [ ] Add avatar upload to backend
-- [ ] Store authentication state (AsyncStorage/SecureStore)
-- [ ] Add push notifications with Expo Notifications
-- [ ] Implement profile editing
-- [ ] Add chat creation functionality
-- [ ] Add loading states and error handling
-- [ ] Implement offline message queue
-- [ ] Add image/file sharing in chats
-
-## 📄 License
-
-This project is licensed under the MIT License.
 
 ---
 
