@@ -31,8 +31,17 @@ export default function Login() {
       // Store token
       if (response.access_token) {
         await storageService.saveToken(response.access_token);
-        // Store email as user identifier
-        await storageService.saveUser({ email });
+        
+        // Decode JWT to get user info
+        const tokenParts = response.access_token.split('.');
+        const payload = JSON.parse(atob(tokenParts[1]));
+        
+        // Store user data from token
+        await storageService.saveUser({
+          email: payload.sub || email,
+          name: payload.name || email.split('@')[0],
+          uid: payload.uid
+        });
       }
       
       router.replace("/(tabs)");

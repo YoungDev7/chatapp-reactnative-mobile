@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,14 +10,33 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { styles } from "../styles/profile.styles";
 import AvatarModal from "../../components/AvatarModal";
+import { storageService } from "../../services/storageService";
+import { authService } from "../../services/authService";
 
 export default function ProfileScreen() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  // TODO: Get user data from auth context/store
-  const user = {
-    name: "Username",
-    email: "user@example.com"
+  const [user, setUser] = useState({
+    name: "Loading...",
+    email: "Loading..."
+  });
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      const userData = await storageService.getUser();
+      if (userData) {
+        setUser({
+          name: userData.name || "Nothing",
+          email: userData.email || "No email"
+        });
+      }
+    } catch (error) {
+      console.error("Error loading user data:", error);
+    }
   };
 
   const handleAvatarPress = () => {
@@ -79,9 +98,17 @@ export default function ProfileScreen() {
 
             <TouchableOpacity 
               style={styles.logoutButton}
-              onPress={() => {
-                // TODO: Implement logout logic (clear tokens, etc.)
-                router.replace("/login");
+              onPress={async () => {
+                try {
+                  await authService.logout();
+                  await storageService.clearAuth();
+                  router.replace("/login");
+                } catch (error) {
+                  console.error("Logout error:", error);
+                  // Clear local storage even if backend call fails
+                  await storageService.clearAuth();
+                  router.replace("/login");
+                }
               }}
             >
               <Ionicons name="log-out-outline" size={24} color="#ff4444" />
