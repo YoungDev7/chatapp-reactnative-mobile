@@ -31,12 +31,9 @@ export default function Login() {
       // Store token
       if (response.access_token) {
         await storageService.saveToken(response.access_token);
-        
-        // Decode JWT to get user info
         const tokenParts = response.access_token.split('.');
         const payload = JSON.parse(atob(tokenParts[1]));
         
-        // Store user data from token
         await storageService.saveUser({
           email: payload.sub || email,
           name: payload.name || email.split('@')[0],
@@ -44,7 +41,7 @@ export default function Login() {
         });
       }
       
-      router.replace("/(tabs)");
+      router.replace("/(tabs)/chats");
     } catch (error: any) {
       console.error("Login failed:", error);
       const errorMessage = error.response?.data?.message || "Login failed. Please check your credentials.";

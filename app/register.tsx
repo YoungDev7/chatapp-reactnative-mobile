@@ -36,7 +36,7 @@ export default function Register() {
     try {
       await authService.register({ username, email, password });
       Alert.alert("Success", "Registration successful! Please login.");
-      router.replace("/login");
+      router.push("/login");
     } catch (error: any) {
       console.error("Registration failed:", error);
       const errorMessage = error.response?.data || "Registration failed. Please try again.";
