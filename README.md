@@ -1,24 +1,33 @@
 # Chat Application - Mobile
 
-A cross-platform mobile chat application built with React Native and Expo. Features JWT authentication, real-time messaging via WebSocket, and a modern mobile-first design with native platform capabilities.
+A cross-platform mobile chat application built with React Native and Expo. Features JWT authentication, real-time messaging, Material Design 3 UI components, and a modern mobile-first design with native platform capabilities.
 
 ## 🚀 Technologies Used
 
 - **React Native** - Cross-platform mobile framework
 - **Expo SDK 54** - Development platform and tools
 - **Expo Router 6** - File-based navigation
+- **React Native Paper** - Material Design 3 components
 - **TypeScript** - Type-safe development
 - **Expo Image Picker** - Camera and photo library access
 - **Ionicons** - Native-looking icons
+- **AsyncStorage** - Local data persistence
 
 ## 📋 Features
 
 - User registration and login with JWT authentication
-- Real-time messaging via WebSocket/STOMP
+- Real-time chat messaging with message history
+- Material Design 3 UI with React Native Paper
+- Advanced message display:
+  - User messages on right (blue), others on left (gray)
+  - Avatar display for other users with initials fallback
+  - Large emoji display (≤3 emojis shown at 48px without bubble)
+  - Proper chat scrolling (inverted FlatList)
 - Tab-based navigation (Chats, Profile)
-- User profile with avatar upload
+- User profile with avatar upload and editing
 - Camera and photo library integration
 - Chat list with search functionality
+- Chat input with emoji button and send button
 - Splash screen with auto-redirect
 - Type-safe codebase with TypeScript
 - Cross-platform support (iOS, Android, Web)
@@ -29,18 +38,40 @@ A cross-platform mobile chat application built with React Native and Expo. Featu
 app/
 ├── (tabs)/                      # Tab-based screens (protected)
 │   ├── _layout.tsx             # Tab navigation layout
-│   ├── index.tsx               # Chats list screen
+│   ├── index.tsx               # Chats list screen (chats.tsx)
 │   └── profile.tsx             # User profile screen
-├── styles/
-│   └── profile.styles.ts       # Profile screen styles
+├── chat/
+│   └── [chatId].tsx            # Dynamic chat view screen
 ├── _layout.tsx                 # Root navigation layout
 ├── index.tsx                   # Splash/loading screen
 ├── login.tsx                   # Login screen
 └── register.tsx                # Registration screen
 
 components/
-├── AvatarModal.tsx             # Photo upload modal
-└── AvatarModal.styles.ts       # Avatar modal styles
+├── chat/
+│   ├── ChatInput.tsx           # Message input component
+│   └── ChatMessage.tsx         # Message display component
+├── styles/
+│   ├── ChatInput.styles.ts    # Chat input styles
+│   └── profile.styles.ts      # Profile screen styles
+└── AvatarModal.tsx            # Photo upload modal
+
+services/
+├── authService.ts              # Authentication API calls
+├── chatService.ts              # Chat and messaging API calls
+└── storageService.ts           # AsyncStorage wrapper
+
+styles/
+├── chatView.styles.ts          # Chat view screen styles
+└── index.css                   # Global styles
+
+types/
+├── chatMessage.ts              # Message type definitions
+└── custom.d.ts                 # Custom type declarations
+
+utils/
+├── chatHelpers.ts              # Chat utility functions
+└── emojiHelper.ts              # Emoji detection and validation
 
 Configuration Files:
 ├── app.json                    # Expo configuration
@@ -148,16 +179,68 @@ File-based routing with Expo Router:
 5. Navigate to protected tab screens
 6. Automatic token refresh on expiration
 
-## 💬 Real-time Messaging (Planned)
+## 💬 Messaging Architecture
 
-The application will use WebSocket/STOMP for real-time communication:
+The application communicates with the Spring Boot backend for messaging:
 
-- Connection setup on app launch
-- Messages sent to `/app/chat` endpoint
-- Real-time updates received from `/topic/messages`
-- Automatic reconnection on network changes
+- **Message Fetching**: REST API `GET /chatviews/{id}/messages`
+- **Message Sending**: Currently using REST API (backend WebSocket integration pending)
+- **Message Display**: 
+  - Inverted FlatList for chat-like scrolling
+  - Messages sorted with newest at bottom
+  - Auto-scroll to latest messages on load
+- **Future Enhancement**: WebSocket/STOMP for real-time updates (matching web frontend)
 
 ## 📱 Key Features
+
+### Chat View Screen
+
+Located in [`app/chat/[chatId].tsx`](app/chat/[chatId].tsx):
+
+- **Message Display**:
+  - User messages aligned right with blue background (#1976d2)
+  - Other users' messages aligned left with gray background (#4c4c4c)
+  - Avatar display (32x32) for other users with initials fallback
+  - Sender name labels ("you" for current user)
+  - Large emoji display (≤3 emojis: 48px, transparent background)
+  - Inverted FlatList for proper chat scrolling behavior
+- **Chat Input** (separate component):
+  - Material Design text input with dark theme
+  - Emoji button inside input field
+  - Square send button (44x44) with proper sizing
+  - Loading state during message sending
+- **Backend Integration**:
+  - Fetches messages from REST API
+  - JWT authentication with Bearer tokens
+  - Error handling and loading states
+
+### Chat Input Component
+
+Component in [`components/chat/ChatInput.tsx`](components/chat/ChatInput.tsx):
+
+- Reusable message input component
+- Integrated emoji button (placeholder for future emoji picker)
+- Send button with disabled/sending states
+- Matches web frontend design patterns
+- Separate style file for maintainability
+
+### Emoji Detection
+
+Utility in [`utils/emojiHelper.ts`](utils/emojiHelper.ts):
+
+- `isOnlyEmojis()` - Checks if text contains only emojis
+- `countEmojis()` - Counts emoji characters in text
+- `shouldDisplayAsLargeEmoji()` - Returns true if ≤3 emojis only
+- Used for special large emoji display in messages
+
+### Chat Helpers
+
+Utility in [`utils/chatHelpers.ts`](utils/chatHelpers.ts):
+
+- `loadCurrentUser()` - Loads user info from storage
+- `fetchMessages()` - Fetches and reverses messages for display
+- `sendMessage()` - Sends message to chat via API
+- Centralized error handling and logging
 
 ### Profile Screen
 
@@ -165,8 +248,8 @@ Located in [`app/(tabs)/profile.tsx`](<app/(tabs)/profile.tsx>):
 
 - User information display
 - Avatar with photo upload capability
-- Profile editing (in progress)
-- Logout functionality
+- Profile editing functionality
+- Logout with token cleanup
 
 ### Avatar Upload Modal
 
@@ -182,20 +265,29 @@ Component in [`components/AvatarModal.tsx`](components/AvatarModal.tsx):
 
 Located in [`app/(tabs)/index.tsx`](<app/(tabs)/index.tsx>):
 
+- List of user's active chats
 - Search functionality
-- Real-time chat updates
-- Mock data structure ready for backend integration
-- Pull-to-refresh support
+- Navigation to individual chat views
+- FAB (Floating Action Button) for creating new chats
+- Backend integration with JWT auth
 
 ## 🎨 Styling
 
+- **React Native Paper** - Material Design 3 components
 - **StyleSheet API** - React Native styling system
 - **Separate style files** - Component-specific `.styles.ts` files
 - **Dark theme** - Consistent dark color scheme
-  - Main background: `#1a1a1a`
-  - Secondary background: `#2a2a2a`
-  - Accent color: `#0066FF`
+  - Main background: `#181818`
+  - Secondary background: `#1f1f1f`
+  - Chat input background: `#424242`
+  - User message bubble: `#1976d2` (blue)
+  - Other message bubble: `#4c4c4c` (gray)
   - Text: `#ffffff`
+- **Message styling**:
+  - Message containers with 70% max width
+  - Rounded corners (borderRadius 12)
+  - Avatar circles (32x32) with centered initials
+  - Large emoji text (48px) without background
 - **Responsive design** - Adapts to different screen sizes
 
 ## 📋 Dependencies
@@ -205,10 +297,13 @@ Located in [`app/(tabs)/index.tsx`](<app/(tabs)/index.tsx>):
 - `expo` - Expo framework (v54)
 - `expo-router` - File-based navigation (v6)
 - `react-native` - React Native framework
+- `react-native-paper` - Material Design 3 components
 - `expo-image-picker` - Camera and photo library access
 - `@expo/vector-icons` - Icon library
 - `react-native-safe-area-context` - Safe area handling
 - `react-native-screens` - Native navigation primitives
+- `@react-native-async-storage/async-storage` - Local storage
+- `axios` - HTTP client for API calls
 
 ### Development Dependencies
 
@@ -216,6 +311,27 @@ Located in [`app/(tabs)/index.tsx`](<app/(tabs)/index.tsx>):
 - `@babel/core` - JavaScript compiler
 - `eslint` - Code linting
 - Various type definitions (`@types/*`)
+
+## 🔗 Backend Integration
+
+The mobile app connects to the Spring Boot backend:
+
+- **Base URL**: Configure in environment or hardcoded in services
+- **Authentication**: JWT Bearer tokens stored in AsyncStorage
+- **Endpoints Used**:
+  - `POST /auth/register` - User registration
+  - `POST /auth/login` - User login
+  - `GET /chatviews` - List user's chats
+  - `GET /chatviews/{id}/messages` - Fetch chat messages
+  - `POST /chatviews/{id}/messages` - Send message (pending backend support)
+  - `GET /users/me` - Get current user info
+  - `PUT /users/me` - Update user profile
+
+### Known Issues
+
+- **Message Sending**: Backend currently only supports WebSocket for sending messages, but mobile app uses REST API. Either:
+  - Backend needs REST POST endpoint for `/chatviews/{id}/messages`
+  - Mobile app needs WebSocket/STOMP implementation (like web frontend)
 
 ## 🚀 Deployment
 
