@@ -4,9 +4,9 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
-  ActivityIndicator,
   RefreshControl,
 } from "react-native";
+import { ActivityIndicator, FAB } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { chatService, Chat } from "../../services/chatService";
@@ -109,6 +109,16 @@ export default function ChatsScreen() {
             </Text>
           </View>
         }
+      />
+
+      <FAB
+        icon="plus"
+        style={styles.fab}
+        onPress={() => {
+          // TODO: Navigate to create chat screen
+          console.log("Create new chat");
+        }}
+        color="#fff"
       />
     </View>
   );
