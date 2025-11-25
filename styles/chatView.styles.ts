@@ -23,6 +23,32 @@ export const styles = StyleSheet.create({
     alignSelf: "flex-end",
     alignItems: "flex-end",
   },
+  messageWithAvatar: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  avatarContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "#424242",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatar: {
+    width: 32,
+    height: 32,
+  },
+  avatarPlaceholder: {
+    color: "rgba(255, 255, 255, 0.6)",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  messageContent: {
+    flex: 1,
+  },
   senderName: {
     color: "rgba(255, 255, 255, 0.6)",
     fontSize: 13,
@@ -56,26 +82,5 @@ export const styles = StyleSheet.create({
   emojiOnlyBubble: {
     backgroundColor: "transparent",
     padding: 4,
-  },
-  inputContainer: {
-    flexDirection: "row",
-    padding: 8,
-    backgroundColor: "#1f1f1f",
-    alignItems: "center",
-    gap: 8,
-  },
-  inputWrapper: {
-    flex: 1,
-  },
-  sendButton: {
-    width: 35,
-    height: 35,
-    borderRadius: 4,
-    backgroundColor: "#1976d2",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  sendButtonDisabled: {
-    opacity: 0.5,
   },
 });
