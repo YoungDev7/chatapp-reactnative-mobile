@@ -2,17 +2,15 @@ import { useLocalSearchParams, Stack } from "expo-router";
 import { useState, useEffect } from "react";
 import {
   View,
-  Text,
   FlatList,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { TextInput, IconButton, ActivityIndicator, Text } from "react-native-paper";
 import { chatService, Message } from "../../services/chatService";
+import { storageService } from "../../services/storageService";
+import { styles } from "../../styles/chatView.styles";
+import { shouldDisplayAsLargeEmoji } from "../../utils/emojiHelper";
 
 export default function ChatViewScreen() {
   const { chatId, chatTitle } = useLocalSearchParams<{ chatId: string; chatTitle: string }>();
@@ -20,12 +18,28 @@ export default function ChatViewScreen() {
   const [inputMessage, setInputMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [currentUserName, setCurrentUserName] = useState<string>("");
+
+  useEffect(() => {
+    loadCurrentUser();
+  }, []);
 
   useEffect(() => {
     if (chatId) {
       fetchMessages();
     }
   }, [chatId]);
+
+  const loadCurrentUser = async () => {
+    try {
+      const user = await storageService.getUser();
+      if (user?.name) {
+        setCurrentUserName(user.name);
+      }
+    } catch (error) {
+      console.error("Failed to load user:", error);
+    }
+  };
 
   const fetchMessages = async () => {
     try {
@@ -54,19 +68,26 @@ export default function ChatViewScreen() {
   };
 
   const renderMessage = ({ item }: { item: Message }) => {
-    const isCurrentUser = item.senderName === "currentUser"; // TODO: Get from auth context
+    const isCurrentUser = item.senderName === currentUserName;
+    const isLargeEmoji = shouldDisplayAsLargeEmoji(item.text);
     
     return (
       <View style={[styles.messageContainer, isCurrentUser && styles.currentUserMessage]}>
-        {!isCurrentUser && (
-          <Text style={styles.senderName}>{item.senderName}</Text>
-        )}
-        <View style={[styles.messageBubble, isCurrentUser && styles.currentUserBubble]}>
-          <Text style={styles.messageText}>{item.text}</Text>
+        <Text variant="bodySmall" style={isCurrentUser ? styles.senderNameRight : styles.senderName}>
+          {isCurrentUser ? "you" : item.senderName}
+        </Text>
+        <View style={[
+          styles.messageBubble,
+          isCurrentUser && styles.currentUserBubble,
+          isLargeEmoji && styles.emojiOnlyBubble
+        ]}>
+          <Text 
+            variant="bodyMedium" 
+            style={[styles.messageText, isLargeEmoji && styles.emojiOnlyText]}
+          >
+            {item.text}
+          </Text>
         </View>
-        {isCurrentUser && (
-          <Text style={styles.senderNameRight}>you</Text>
-        )}
       </View>
     );
   };
@@ -74,7 +95,7 @@ export default function ChatViewScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#1976d2" />
+          <ActivityIndicator animating={true} size="large" color="#1976d2" />
       </View>
     );
   }
@@ -104,111 +125,32 @@ export default function ChatViewScreen() {
         <View style={styles.inputContainer}>
           <View style={styles.inputWrapper}>
             <TextInput
-              style={styles.input}
+              mode="outlined"
               placeholder="Aa"
               placeholderTextColor="rgba(255, 255, 255, 0.5)"
               value={inputMessage}
               onChangeText={setInputMessage}
               multiline
+              style={{ backgroundColor: "transparent" }}
+              outlineColor="#666"
+              activeOutlineColor="#1976d2"
+              textColor="white"
             />
           </View>
-          <TouchableOpacity
-            style={[styles.sendButton, !inputMessage.trim() && styles.sendButtonDisabled]}
+          <IconButton
+            icon="send"
+            mode="contained"
+            containerColor={!inputMessage.trim() ? "rgba(25, 118, 210, 0.5)" : "#1976d2"}
+            iconColor="white"
+            size={20}
             onPress={handleSend}
             disabled={!inputMessage.trim() || sending}
-          >
-            {sending ? (
-              <ActivityIndicator size="small" color="white" />
-            ) : (
-              <Ionicons name="paper-plane" size={20} color="white" />
-            )}
-          </TouchableOpacity>
+            loading={sending}
+          />
         </View>
       </KeyboardAvoidingView>
     </>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#181818",
-  },
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: "#181818",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  messagesList: {
-    padding: 16,
-  },
-  messageContainer: {
-    marginBottom: 16,
-    maxWidth: "70%",
-    alignSelf: "flex-start",
-  },
-  currentUserMessage: {
-    alignSelf: "flex-end",
-    alignItems: "flex-end",
-  },
-  senderName: {
-    color: "rgba(255, 255, 255, 0.6)",
-    fontSize: 13,
-    marginBottom: 4,
-    marginLeft: 15,
-  },
-  senderNameRight: {
-    color: "rgba(255, 255, 255, 0.6)",
-    fontSize: 13,
-    marginTop: 4,
-    marginRight: 15,
-    textAlign: "right",
-  },
-  messageBubble: {
-    backgroundColor: "#4c4c4c",
-    borderRadius: 17,
-    padding: 8,
-    paddingHorizontal: 12,
-  },
-  currentUserBubble: {
-    backgroundColor: "#1976d2",
-  },
-  messageText: {
-    color: "white",
-    fontSize: 16,
-  },
-  inputContainer: {
-    flexDirection: "row",
-    padding: 8,
-    backgroundColor: "#1f1f1f",
-    alignItems: "center",
-    gap: 8,
-  },
-  inputWrapper: {
-    flex: 1,
-    backgroundColor: "#424242",
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "#666",
-    paddingHorizontal: 14,
-    minHeight: 35,
-    justifyContent: "center",
-  },
-  input: {
-    color: "white",
-    fontSize: 16,
-    maxHeight: 100,
-  },
-  sendButton: {
-    width: 35,
-    height: 35,
-    borderRadius: 4,
-    backgroundColor: "#1976d2",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  sendButtonDisabled: {
-    opacity: 0.5,
-  },
-});
+
