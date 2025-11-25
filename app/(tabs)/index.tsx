@@ -10,10 +10,11 @@ import {
   RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Link } from "expo-router";
+import { useRouter } from "expo-router";
 import { chatService, Chat } from "../../services/chatService";
 
 export default function ChatsScreen() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,7 +49,14 @@ export default function ChatsScreen() {
   );
 
   const renderChat = ({ item }: { item: Chat }) => (
-    <TouchableOpacity style={styles.chatItem}>
+    <TouchableOpacity
+      style={styles.chatItem}
+      onPress={() =>
+        router.push(
+          `/chat/${item.viewId}?chatTitle=${encodeURIComponent(item.title)}` as any
+        )
+      }
+    >
       <Ionicons name="people" size={20} color="#fff" style={styles.chatIcon} />
       <View style={styles.chatInfo}>
         <Text style={styles.chatTitle}>{item.title}</Text>
