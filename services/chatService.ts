@@ -1,9 +1,10 @@
 import api from './api';
 
 export interface Chat {
-  viewId: string;
-  title: string;
-  messages?: Message[];
+  id: string;
+  name: string;
+  userUids?: string[];
+  messageCount?: number;
 }
 
 export interface Message {
@@ -19,7 +20,7 @@ export const chatService = {
    */
   async getChats(): Promise<Chat[]> {
     try {
-      const response = await api.get('/chatview');
+      const response = await api.get('/chatviews');
       return response.data;
     } catch (error) {
       console.error('Error fetching chats:', error);
@@ -32,7 +33,7 @@ export const chatService = {
    */
   async getMessages(chatViewId: string): Promise<Message[]> {
     try {
-      const response = await api.get(`/chatview/${chatViewId}/messages`);
+      const response = await api.get(`/chatviews/${chatViewId}/messages`);
       return response.data;
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -45,7 +46,7 @@ export const chatService = {
    */
   async sendMessage(chatViewId: string, text: string): Promise<Message> {
     try {
-      const response = await api.post(`/chatview/${chatViewId}/messages`, {
+      const response = await api.post(`/chatviews/${chatViewId}/messages`, {
         text,
         createdAt: new Date().toISOString(),
       });
