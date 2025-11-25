@@ -58,6 +58,15 @@ export const styles = StyleSheet.create({
   buttonGroup: {
     gap: 12,
   },
+  input: {
+    marginBottom: 8,
+    backgroundColor: "transparent",
+  },
+  errorText: {
+    color: "#FF3B30",
+    fontSize: 12,
+    marginBottom: 12,
+  },
   actionButton: {
     flexDirection: "row",
     alignItems: "center",
