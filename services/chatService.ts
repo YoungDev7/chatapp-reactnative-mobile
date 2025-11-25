@@ -11,6 +11,7 @@ export interface Message {
   id?: string;
   text: string;
   senderName: string;
+  senderAvatar?: string;
   createdAt?: string;
 }
 
@@ -47,8 +48,7 @@ export const chatService = {
   async sendMessage(chatViewId: string, text: string): Promise<Message> {
     try {
       const response = await api.post(`/chatviews/${chatViewId}/messages`, {
-        text,
-        createdAt: new Date().toISOString(),
+        text
       });
       return response.data;
     } catch (error) {
