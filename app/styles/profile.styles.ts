@@ -3,7 +3,7 @@ import { StyleSheet } from "react-native";
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1a1a1a",
+    backgroundColor: "#181818",
     padding: 24,
   },
   backButton: {
@@ -23,7 +23,7 @@ export const styles = StyleSheet.create({
   card: {
     maxWidth: 600,
     width: "100%",
-    backgroundColor: "#2a2a2a",
+    backgroundColor: "#1f1f1f",
     borderRadius: 8,
     padding: 32,
     shadowColor: "#000",
@@ -46,7 +46,7 @@ export const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: "#0066FF",
+    backgroundColor: "#1976d2",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
@@ -65,7 +65,7 @@ export const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#0066FF",
+    backgroundColor: "#1976d2",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
@@ -90,6 +90,22 @@ export const styles = StyleSheet.create({
   infoValue: {
     color: "white",
     fontSize: 20,
+    fontWeight: "600",
+  },
+  logoutButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    paddingVertical: 16,
+    backgroundColor: "rgba(255, 68, 68, 0.1)",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255, 68, 68, 0.3)",
+  },
+  logoutText: {
+    color: "#ff4444",
+    fontSize: 16,
     fontWeight: "600",
   },
 });
