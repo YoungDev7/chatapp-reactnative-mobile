@@ -8,7 +8,7 @@ import {
   Alert,
 } from "react-native";
 import { TextInput, Button, Text, Surface } from "react-native-paper";
-import { styles } from "./styles/register.styles";
+import { styles } from "../styles/register.styles";
 import { authService } from "../services/authService";
 // import { storageService } from "../services/storageService";
 

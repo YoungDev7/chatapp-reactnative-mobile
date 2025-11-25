@@ -8,7 +8,7 @@ import {
   Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { styles } from "../styles/profile.styles";
+import { styles } from "../../styles/profile.styles";
 import AvatarModal from "../../components/AvatarModal";
 import { storageService } from "../../services/storageService";
 import { authService } from "../../services/authService";
