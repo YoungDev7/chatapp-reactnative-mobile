@@ -4,9 +4,10 @@
 // For physical devices: use your Mac's local IP address on the same network
 
 export const API_CONFIG = {
-  // Change this to your Mac's local IP address when testing on a device
-  BASE_URL: 'http://localhost:8080/api/v1',
-  WS_URL: 'ws://localhost:8080/ws',
+  // For iOS Simulator, use your Mac's local IP address
+  // Find it by running: ipconfig getifaddr en0 (WiFi) or ipconfig getifaddr en1 (Ethernet)
+  BASE_URL: 'http://192.168.0.207:8080/api/v1',
+  WS_URL: 'ws://192.168.0.207:8080/ws',
   TIMEOUT: 10000,
 };
 

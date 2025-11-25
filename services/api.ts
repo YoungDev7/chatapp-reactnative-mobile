@@ -1,18 +1,22 @@
 import axios from 'axios';
 import { getApiUrl } from '../config/api';
+import { storageService } from './storageService';
 
 const api = axios.create({
   baseURL: getApiUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true,
   timeout: 10000,
 });
 
-// Add request interceptor for debugging
+// Add request interceptor for debugging and adding auth token
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
+    const token = await storageService.getToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     console.log('API Request:', config.method?.toUpperCase(), config.url);
     return config;
   },

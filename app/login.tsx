@@ -2,22 +2,47 @@ import { router } from "expo-router";
 import { useState } from "react";
 import {
   View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
+import { TextInput, Button, Text, Surface } from "react-native-paper";
+import { styles } from "./styles/login.styles";
+import { authService } from "../services/authService";
+import { storageService } from "../services/storageService";
 
 export default function Login() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    // TODO: Implement login logic
-    console.log("Login:", username, password);
-    router.replace("/(tabs)");
+  const handleLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert("Error", "Please enter email and password");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await authService.login(email, password);
+      console.log("Login successful:", response);
+      
+      // Store token
+      if (response.access_token) {
+        await storageService.saveToken(response.access_token);
+        // Store email as user identifier
+        await storageService.saveUser({ email });
+      }
+      
+      router.replace("/(tabs)");
+    } catch (error: any) {
+      console.error("Login failed:", error);
+      const errorMessage = error.response?.data?.message || "Login failed. Please check your credentials.";
+      Alert.alert("Login Failed", errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -26,95 +51,65 @@ export default function Login() {
       style={styles.container}
     >
       <View style={styles.content}>
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
+        <Text variant="displaySmall" style={styles.title}>Login</Text>
+        {/* <Text variant="bodyLarge" style={styles.subtitle}>Sign in to continue</Text> */}
 
-        <View style={styles.form}>
+        <Surface style={styles.form} elevation={0}>
           <TextInput
-            style={styles.input}
-            placeholder="Username"
-            placeholderTextColor="#666"
-            value={username}
-            onChangeText={setUsername}
+            mode="outlined"
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
             autoCapitalize="none"
+            keyboardType="email-address"
+            style={styles.input}
+            outlineColor="#424242"
+            activeOutlineColor="#1976d2"
+            textColor="white"
+            theme={{ colors: { onSurfaceVariant: '#999' } }}
           />
 
           <TextInput
-            style={styles.input}
-            placeholder="Password"
-            placeholderTextColor="#666"
+            mode="outlined"
+            label="Password"
             value={password}
             onChangeText={setPassword}
-            secureTextEntry
+            secureTextEntry={!showPassword}
+            style={styles.input}
+            outlineColor="#424242"
+            activeOutlineColor="#1976d2"
+            textColor="white"
+            theme={{ colors: { onSurfaceVariant: '#999' } }}
+            right={
+              <TextInput.Icon 
+                icon={showPassword ? "eye-off" : "eye"} 
+                color="#999" 
+                onPress={() => setShowPassword(!showPassword)}
+              />
+            }
           />
 
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>Login</Text>
-          </TouchableOpacity>
+          <Button 
+            mode="contained" 
+            onPress={handleLogin}
+            style={styles.button}
+            buttonColor="#1976d2"
+            contentStyle={styles.buttonContent}
+            loading={loading}
+            disabled={loading}
+          >
+            Login
+          </Button>
 
-          <TouchableOpacity onPress={() => router.push("/register")}>
-            <Text style={styles.link}>
-              Don t have an account? <Text style={styles.linkBold}>Sign up</Text>
-            </Text>
-          </TouchableOpacity>
-        </View>
+          <Button 
+            mode="text" 
+            onPress={() => router.push("/register")}
+            textColor="#1976d2"
+          >
+            Don&apos;t have an account? Sign up
+          </Button>
+        </Surface>
       </View>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#1a1a1a",
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 20,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "white",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#999",
-    marginBottom: 40,
-  },
-  form: {
-    gap: 16,
-  },
-  input: {
-    backgroundColor: "#2a2a2a",
-    borderRadius: 8,
-    padding: 16,
-    fontSize: 16,
-    color: "white",
-    borderWidth: 1,
-    borderColor: "#333",
-  },
-  button: {
-    backgroundColor: "#0066FF",
-    borderRadius: 8,
-    padding: 16,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  link: {
-    color: "#999",
-    textAlign: "center",
-    marginTop: 8,
-  },
-  linkBold: {
-    color: "#0066FF",
-    fontWeight: "600",
-  },
-});
