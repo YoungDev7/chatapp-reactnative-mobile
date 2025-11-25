@@ -74,6 +74,19 @@ export default function ProfileScreen() {
                 <Text style={styles.infoValue}>{user.email || 'Not provided'}</Text>
               </View>
             </View>
+
+            <View style={styles.divider} />
+
+            <TouchableOpacity 
+              style={styles.logoutButton}
+              onPress={() => {
+                // TODO: Implement logout logic
+                console.log('Logout pressed');
+              }}
+            >
+              <Ionicons name="log-out-outline" size={24} color="#ff4444" />
+              <Text style={styles.logoutText}>Logout</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
