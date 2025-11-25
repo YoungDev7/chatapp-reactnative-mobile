@@ -80,8 +80,8 @@ export default function ProfileScreen() {
             <TouchableOpacity 
               style={styles.logoutButton}
               onPress={() => {
-                // TODO: Implement logout logic
-                console.log('Logout pressed');
+                // TODO: Implement logout logic (clear tokens, etc.)
+                router.replace("/login");
               }}
             >
               <Ionicons name="log-out-outline" size={24} color="#ff4444" />
