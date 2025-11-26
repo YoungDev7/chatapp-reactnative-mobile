@@ -102,12 +102,12 @@ export default function ProfileScreen() {
                 try {
                   await authService.logout();
                   await storageService.clearAuth();
-                  router.replace("/login");
+                  router.replace("/auth/login");
                 } catch (error) {
                   console.error("Logout error:", error);
                   // Clear local storage even if backend call fails
                   await storageService.clearAuth();
-                  router.replace("/login");
+                  router.replace("/auth/login");
                 }
               }}
             >

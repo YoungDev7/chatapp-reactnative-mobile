@@ -7,7 +7,7 @@ export default function Index() {
     // TODO: Check if user is authenticated
     // For now, redirect to login after 1 second
     const timeout = setTimeout(() => {
-      router.replace("/login");
+      router.replace("/auth/login");
     }, 1000);
 
     return () => clearTimeout(timeout);

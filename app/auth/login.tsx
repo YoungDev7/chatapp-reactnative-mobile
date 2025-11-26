@@ -7,9 +7,9 @@ import {
   Alert,
 } from "react-native";
 import { TextInput, Button, Text, Surface } from "react-native-paper";
-import { styles } from "../styles/login.styles";
-import { authService } from "../services/authService";
-import { storageService } from "../services/storageService";
+import { styles } from "../../styles/login.styles";
+import { authService } from "../../services/authService";
+import { storageService } from "../../services/storageService";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -109,7 +109,7 @@ export default function Login() {
 
           <Button 
             mode="text" 
-            onPress={() => router.push("/register")}
+            onPress={() => router.push("/auth/register")}
             textColor="#1976d2"
           >
             Don&apos;t have an account? Sign up
