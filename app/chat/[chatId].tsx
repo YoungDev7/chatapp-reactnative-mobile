@@ -1,5 +1,5 @@
 import { useLocalSearchParams, Stack } from "expo-router";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   View,
   FlatList,
@@ -8,59 +8,54 @@ import {
   Image,
 } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
-import { Message } from "../../services/chatService";
 import { styles } from "../../styles/chatView.styles";
 import { shouldDisplayAsLargeEmoji } from "../../utils/emojiHelper";
-import { 
-  loadCurrentUser as loadUser, 
-  fetchMessages as getMessages, 
-  sendMessage as postMessage 
-} from "../../utils/chatHelpers";
 import ChatInput from "../../components/chat/ChatInput";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchMessages, sendMessage, fetchChatViews, type Message } from "@/store/slices/chatViewSlice";
 
 export default function ChatViewScreen() {
   const { chatId, chatTitle } = useLocalSearchParams<{ chatId: string; chatTitle: string }>();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const dispatch = useAppDispatch();
   const [inputMessage, setInputMessage] = useState("");
-  const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [currentUserName, setCurrentUserName] = useState<string>("");
   const flatListRef = useRef<FlatList>(null);
+  
+  const currentUserName = useAppSelector((state) => state.auth.user.name || "");
+  const chatViewCollection = useAppSelector((state) => state.chatView.chatViewCollection);
+  const chatView = useAppSelector((state) => 
+    state.chatView.chatViewCollection.find(v => v.viewId === Number(chatId))
+  );
+  
+  const messages = chatView?.messages || [];
+  const loading = chatView?.isLoading || false;
 
+  // Load chat views first if not loaded
   useEffect(() => {
-    loadCurrentUser();
-  }, []);
-
-  const loadCurrentUser = async () => {
-    const userName = await loadUser();
-    setCurrentUserName(userName);
-  };
-
-  const fetchMessages = useCallback(async () => {
-    try {
-      const data = await getMessages(chatId);
-      setMessages(data);
-    } catch (error) {
-      console.error("Failed to fetch messages:", error);
-    } finally {
-      setLoading(false);
+    if (chatViewCollection.length === 0) {
+      dispatch(fetchChatViews());
     }
-  }, [chatId]);
+  }, [dispatch, chatViewCollection.length]);
 
   useEffect(() => {
     if (chatId) {
-      fetchMessages();
+      // First ensure we have chat views loaded
+      if (chatView) {
+        dispatch(fetchMessages(chatId));
+      }
     }
-  }, [chatId, fetchMessages]);
+  }, [chatId, chatView, dispatch]);
 
   const handleSend = async () => {
     if (!inputMessage.trim() || sending) return;
 
     setSending(true);
     try {
-      await postMessage(chatId, inputMessage.trim());
+      await dispatch(sendMessage({ 
+        chatViewId: chatId, 
+        text: inputMessage.trim() 
+      })).unwrap();
       setInputMessage("");
-      await fetchMessages(); 
     } catch (error) {
       console.error("Failed to send message:", error);
     } finally {
@@ -159,7 +154,7 @@ export default function ChatViewScreen() {
       >
         <FlatList
           ref={flatListRef}
-          data={messages}
+          data={[...messages].reverse()}
           renderItem={renderMessage}
           keyExtractor={(item, index) => item.id || index.toString()}
           contentContainerStyle={styles.messagesList}

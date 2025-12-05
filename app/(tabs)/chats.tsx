@@ -9,34 +9,34 @@ import {
 import { ActivityIndicator, FAB } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { chatService, Chat } from "../../services/chatService";
 import SearchBar from "../../components/SearchBar";
 import { styles } from "../../styles/chats.styles";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchChatViews } from "@/store/slices/chatViewSlice";
 
 export default function ChatsScreen() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const [searchQuery, setSearchQuery] = useState("");
-  const [chats, setChats] = useState<Chat[]>([]);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  
+  const { chatViewCollection, isLoadingChatViews, chatViewsError } = useAppSelector(
+    (state) => state.chatView
+  );
 
   const fetchChats = async () => {
     try {
-      setError(null);
-      const data = await chatService.getChats();
-      setChats(data);
+      await dispatch(fetchChatViews()).unwrap();
     } catch (err) {
       console.error("Failed to fetch chats:", err);
-      setError("Failed to load chats. Please check your connection.");
     } finally {
-      setLoading(false);
       setRefreshing(false);
     }
   };
 
   useEffect(() => {
     fetchChats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onRefresh = () => {
@@ -44,27 +44,27 @@ export default function ChatsScreen() {
     fetchChats();
   };
 
-  const filteredChats = chats.filter((chat) =>
-    chat.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredChats = chatViewCollection.filter((chat) =>
+    chat.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const renderChat = ({ item }: { item: Chat }) => (
+  const renderChat = ({ item }: { item: typeof chatViewCollection[0] }) => (
     <TouchableOpacity
       style={styles.chatItem}
       onPress={() =>
         router.push(
-          `/chat/${item.id}?chatTitle=${encodeURIComponent(item.name)}` as any
+          `/chat/${item.viewId}?chatTitle=${encodeURIComponent(item.title)}` as any
         )
       }
     >
       <Ionicons name="people" size={20} color="#fff" style={styles.chatIcon} />
       <View style={styles.chatInfo}>
-        <Text style={styles.chatTitle}>{item.name}</Text>
+        <Text style={styles.chatTitle}>{item.title || 'Untitled Chat'}</Text>
       </View>
     </TouchableOpacity>
   );
 
-  if (loading) {
+  if (isLoadingChatViews && chatViewCollection.length === 0) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#1976d2" />
@@ -81,9 +81,9 @@ export default function ChatsScreen() {
         placeholder="Search chats..."
       />
 
-      {error && (
+      {chatViewsError && (
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.errorText}>{chatViewsError}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={fetchChats}>
             <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
@@ -93,7 +93,7 @@ export default function ChatsScreen() {
       <FlatList
         data={filteredChats}
         renderItem={renderChat}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.viewId.toString()}
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl
@@ -105,7 +105,7 @@ export default function ChatsScreen() {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>
-              {error ? "Pull to retry" : "No chats found"}
+              {chatViewsError ? "Pull to retry" : "No chats found"}
             </Text>
           </View>
         }
