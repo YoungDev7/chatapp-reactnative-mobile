@@ -6,46 +6,70 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { styles } from "../../styles/profile.styles";
 import AvatarModal from "../../components/AvatarModal";
-import { storageService } from "../../services/storageService";
-import { authService } from "../../services/authService";
+import { handleLogout, setAvatar } from "@/store/slices/authSlice";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import api from "@/services/api";
 
 export default function ProfileScreen() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [user, setUser] = useState({
-    name: "Loading...",
-    email: "Loading..."
-  });
+  const [loading, setLoading] = useState(false);
+  const user = useAppSelector((state) => state.auth.user);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
-    loadUserData();
-  }, []);
-
-  const loadUserData = async () => {
-    try {
-      const userData = await storageService.getUser();
-      if (userData) {
-        setUser({
-          name: userData.name || "Nothing",
-          email: userData.email || "No email"
-        });
+    // Fetch avatar on mount
+    const fetchAvatar = async () => {
+      try {
+        const response = await api.get('/user/avatar');
+        if (response.data?.avatarLink) {
+          setAvatarUrl(response.data.avatarLink);
+          dispatch(setAvatar(response.data.avatarLink));
+        }
+      } catch (error: any) {
+        // 404 is expected if user has no avatar yet
+        if (error.response?.status !== 404) {
+          console.log("Error fetching avatar:", error.response?.status, error.response?.data);
+        }
       }
-    } catch (error) {
-      console.error("Error loading user data:", error);
+    };
+
+    if (user.uid) {
+      if (user.avatarLink) {
+        setAvatarUrl(user.avatarLink);
+      } else {
+        fetchAvatar();
+      }
     }
-  };
+  }, [user.uid, user.avatarLink, dispatch]);
 
   const handleAvatarPress = () => {
     setModalVisible(true);
   };
 
-  const handleAvatarSave = (uri: string) => {
-    setAvatarUrl(uri);
-    // TODO: Upload to backend
+  const handleAvatarSave = async (uri: string) => {
+    setLoading(true);
+    try {
+      await api.patch('/user/avatar', { avatarLink: uri });
+      setAvatarUrl(uri);
+      dispatch(setAvatar(uri));
+      Alert.alert("Success", "Avatar updated successfully!");
+    } catch (error: any) {
+      console.error("Failed to save avatar:", error);
+      console.error("Error details:", error.response?.status, error.response?.data);
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Failed to update avatar. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -75,8 +99,13 @@ export default function ProfileScreen() {
                 <TouchableOpacity 
                   style={styles.cameraButton}
                   onPress={handleAvatarPress}
+                  disabled={loading}
                 >
-                  <Ionicons name="camera" size={20} color="white" />
+                  {loading ? (
+                    <ActivityIndicator size="small" color="white" />
+                  ) : (
+                    <Ionicons name="camera" size={20} color="white" />
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -100,13 +129,10 @@ export default function ProfileScreen() {
               style={styles.logoutButton}
               onPress={async () => {
                 try {
-                  await authService.logout();
-                  await storageService.clearAuth();
+                  await dispatch(handleLogout()).unwrap();
                   router.replace("/auth/login");
                 } catch (error) {
                   console.error("Logout error:", error);
-                  // Clear local storage even if backend call fails
-                  await storageService.clearAuth();
                   router.replace("/auth/login");
                 }
               }}
