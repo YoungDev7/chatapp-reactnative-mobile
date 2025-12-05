@@ -1,17 +1,33 @@
 import { router } from "expo-router";
 import { useEffect } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { validateToken } from "@/store/slices/authSlice";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Index() {
-  useEffect(() => {
-    // TODO: Check if user is authenticated
-    // For now, redirect to login after 1 second
-    const timeout = setTimeout(() => {
-      router.replace("/auth/login");
-    }, 1000);
+  const dispatch = useAppDispatch();
+  const { isValidating } = useAppSelector((state) => state.auth);
 
-    return () => clearTimeout(timeout);
-  }, []);
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const token = await AsyncStorage.getItem('accessToken');
+        if (token) {
+          // Validate token with server
+          await dispatch(validateToken()).unwrap();
+          router.replace("/(tabs)/chats");
+        } else {
+          router.replace("/auth/login");
+        }
+      } catch (error) {
+        console.error("Token validation failed:", error);
+        router.replace("/auth/login");
+      }
+    };
+
+    checkAuth();
+  }, [dispatch]);
 
   return (
     <View style={styles.container}>

@@ -9,17 +9,18 @@ import {
 } from "react-native";
 import { TextInput, Button, Text, Surface } from "react-native-paper";
 import { styles } from "../../styles/register.styles";
-import { authService } from "../../services/authService";
-// import { storageService } from "../services/storageService";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { register } from "@/store/slices/authSlice";
 
 export default function Register() {
+  const dispatch = useAppDispatch();
+  const { loginLoading } = useAppSelector((state) => state.auth);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
     if (!username.trim() || !email.trim() || !password.trim()) {
@@ -32,18 +33,16 @@ export default function Register() {
       return;
     }
 
-    setLoading(true);
-    try {
-      await authService.register({ username, email, password });
-      Alert.alert("Success", "Registration successful! Please login.");
-      router.push("/login");
-    } catch (error: any) {
-      console.error("Registration failed:", error);
-      const errorMessage = error.response?.data || "Registration failed. Please try again.";
-      Alert.alert("Registration Failed", errorMessage);
-    } finally {
-      setLoading(false);
-    }
+    dispatch(register({ username, email, password }))
+      .unwrap()
+      .then(() => {
+        Alert.alert("Success", "Registration successful! Please login.", [
+          { text: "OK", onPress: () => router.push("/auth/login") }
+        ]);
+      })
+      .catch((errorMessage) => {
+        Alert.alert("Registration Failed", errorMessage || "Registration failed. Please try again.");
+      });
   };
 
   return (
@@ -68,7 +67,7 @@ export default function Register() {
               activeOutlineColor="#1976d2"
               textColor="white"
               theme={{ colors: { onSurfaceVariant: '#999' } }}
-              disabled={loading}
+              disabled={loginLoading}
             />
 
             <TextInput
@@ -83,7 +82,7 @@ export default function Register() {
               activeOutlineColor="#1976d2"
               textColor="white"
               theme={{ colors: { onSurfaceVariant: '#999' } }}
-              disabled={loading}
+              disabled={loginLoading}
             />
 
             <TextInput
@@ -97,7 +96,7 @@ export default function Register() {
               activeOutlineColor="#1976d2"
               textColor="white"
               theme={{ colors: { onSurfaceVariant: '#999' } }}
-              disabled={loading}
+              disabled={loginLoading}
               right={
                 <TextInput.Icon 
                   icon={showPassword ? "eye-off" : "eye"} 
@@ -118,7 +117,7 @@ export default function Register() {
               activeOutlineColor="#1976d2"
               textColor="white"
               theme={{ colors: { onSurfaceVariant: '#999' } }}
-              disabled={loading}
+              disabled={loginLoading}
               right={
                 <TextInput.Icon 
                   icon={showConfirmPassword ? "eye-off" : "eye"} 
@@ -135,8 +134,8 @@ export default function Register() {
               buttonColor="#1976d2"
               textColor="white"
               contentStyle={styles.buttonContent}
-              loading={loading}
-              disabled={loading}
+              loading={loginLoading}
+              disabled={loginLoading}
             >
               Sign Up
             </Button>
