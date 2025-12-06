@@ -1,13 +1,12 @@
 import { router } from "expo-router";
 import { useEffect } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useAppDispatch } from "@/store/hooks";
 import { validateToken } from "@/store/slices/authSlice";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Index() {
   const dispatch = useAppDispatch();
-  const { isValidating } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -22,6 +21,9 @@ export default function Index() {
         }
       } catch (error) {
         console.error("Token validation failed:", error);
+        // Clear invalid token
+        await AsyncStorage.removeItem('accessToken');
+        await AsyncStorage.removeItem('refreshToken');
         router.replace("/auth/login");
       }
     };

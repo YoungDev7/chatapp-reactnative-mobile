@@ -26,6 +26,12 @@ export const styles = StyleSheet.create({
   chatTitle: {
     color: "white",
     fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  lastMessage: {
+    color: "rgba(255, 255, 255, 0.6)",
+    fontSize: 14,
     fontWeight: "400",
   },
   emptyContainer: {

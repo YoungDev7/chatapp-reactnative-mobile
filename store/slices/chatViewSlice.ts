@@ -10,7 +10,7 @@ export interface Message {
 }
 
 export interface ChatView {
-  viewId: number;
+  id: string;
   title: string;
   isLoading: boolean;
   messages: Message[];
@@ -125,22 +125,22 @@ const chatViewSlice = createSlice({
     },
     reducers: {
         setMessages: (state, action) => {
-            const { viewId, messages } = action.payload;
-            const view = state.chatViewCollection.find(v => v.viewId === viewId);
+            const { id, messages } = action.payload;
+            const view = state.chatViewCollection.find(v => v.id === id);
             if (view) {
                 view.messages = messages;
             }
         },
         addMessage: (state, action) => {
-            const { viewId, message } = action.payload;
-            const view = state.chatViewCollection.find(v => v.viewId === viewId);
+            const { id, message } = action.payload;
+            const view = state.chatViewCollection.find(v => v.id === id);
             if (view) {
                 view.messages.push(message);
             }
         },
         addChatView: (state, action) => {
             state.chatViewCollection.push({
-                viewId: action.payload.viewId,
+                id: action.payload.id,
                 title: action.payload.title,
                 isLoading: false,
                 messages: [],
@@ -157,7 +157,14 @@ const chatViewSlice = createSlice({
           })
           .addCase(fetchChatViews.fulfilled, (state, action) => {
               state.isLoadingChatViews = false;
-              state.chatViewCollection = action.payload;
+              // Map the backend response to ensure each chat view has required fields
+              state.chatViewCollection = action.payload.map((chatView: any) => ({
+                id: chatView.id,
+                title: chatView.name || chatView.title || 'Untitled Chat',
+                isLoading: false,
+                messages: [],
+                error: null
+              }));
           })
           .addCase(fetchChatViews.rejected, (state, action) => {
               state.isLoadingChatViews = false;
@@ -167,15 +174,25 @@ const chatViewSlice = createSlice({
           // Fetch messages
           .addCase(fetchMessages.pending, (state, action) => {
               const chatViewId = action.meta.arg;
-              const view = state.chatViewCollection.find(v => v.viewId === Number(chatViewId));
-              if (view) {
+              let view = state.chatViewCollection.find(v => v.id === chatViewId);
+              if (!view) {
+                  // Create a placeholder chat view if it doesn't exist
+                  view = {
+                      id: chatViewId,
+                      title: 'Loading...',
+                      isLoading: true,
+                      messages: [],
+                      error: null
+                  };
+                  state.chatViewCollection.push(view);
+              } else {
                   view.isLoading = true;
                   view.error = null;
               }
           })
           .addCase(fetchMessages.fulfilled, (state, action) => {
               const { chatViewId, messages } = action.payload;
-              const view = state.chatViewCollection.find(v => v.viewId === Number(chatViewId));
+              const view = state.chatViewCollection.find(v => v.id === chatViewId);
               if (view) {
                   view.messages = messages;
                   view.isLoading = false;
@@ -183,7 +200,7 @@ const chatViewSlice = createSlice({
           })
           .addCase(fetchMessages.rejected, (state, action) => {
               const chatViewId = action.meta.arg;
-              const view = state.chatViewCollection.find(v => v.viewId === Number(chatViewId));
+              const view = state.chatViewCollection.find(v => v.id === chatViewId);
               if (view) {
                   view.isLoading = false;
                   view.error = action.error.message || 'Failed to fetch messages';
@@ -193,7 +210,7 @@ const chatViewSlice = createSlice({
           // Send message
           .addCase(sendMessage.fulfilled, (state, action) => {
               const { chatViewId, message } = action.payload;
-              const view = state.chatViewCollection.find(v => v.viewId === Number(chatViewId));
+              const view = state.chatViewCollection.find(v => v.id === chatViewId);
               if (view) {
                   view.messages.push(message);
               }

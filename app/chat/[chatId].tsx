@@ -24,27 +24,32 @@ export default function ChatViewScreen() {
   const currentUserName = useAppSelector((state) => state.auth.user.name || "");
   const chatViewCollection = useAppSelector((state) => state.chatView.chatViewCollection);
   const chatView = useAppSelector((state) => 
-    state.chatView.chatViewCollection.find(v => v.viewId === Number(chatId))
+    state.chatView.chatViewCollection.find(v => v.id === chatId)
   );
   
   const messages = chatView?.messages || [];
   const loading = chatView?.isLoading || false;
 
+  console.log('ChatViewScreen - chatId:', chatId);
+  console.log('ChatViewScreen - chatView found:', !!chatView);
+  console.log('ChatViewScreen - messages count:', messages.length);
+  console.log('ChatViewScreen - loading:', loading);
+
   // Load chat views first if not loaded
   useEffect(() => {
     if (chatViewCollection.length === 0) {
+      console.log('Loading chat views...');
       dispatch(fetchChatViews());
     }
   }, [dispatch, chatViewCollection.length]);
 
   useEffect(() => {
     if (chatId) {
-      // First ensure we have chat views loaded
-      if (chatView) {
-        dispatch(fetchMessages(chatId));
-      }
+      console.log('Fetching messages for chatId:', chatId);
+      // Fetch messages regardless of whether chatView exists
+      dispatch(fetchMessages(chatId));
     }
-  }, [chatId, chatView, dispatch]);
+  }, [chatId, dispatch]);
 
   const handleSend = async () => {
     if (!inputMessage.trim() || sending) return;

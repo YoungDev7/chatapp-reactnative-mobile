@@ -67,9 +67,13 @@ export const styles = StyleSheet.create({
     borderRadius: 17,
     padding: 8,
     paddingHorizontal: 12,
+    alignSelf: "flex-start", // Fit to text content
+    maxWidth: "80%", // Prevent overly wide bubbles
   },
   currentUserBubble: {
     backgroundColor: "#1976d2",
+    alignSelf: "flex-end", // Fit to text content for current user
+    maxWidth: "80%",
   },
   messageText: {
     color: "white",

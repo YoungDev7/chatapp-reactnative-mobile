@@ -53,7 +53,7 @@ export const validateToken = createAsyncThunk(
       if (!token) {
         throw new Error("no token found in storage");
       }
-      await api.get('/auth/validate-token');
+      await api.get('/auth/validateToken');
       
       // Load user data from storage to get avatar
       const userStr = await AsyncStorage.getItem('user');
