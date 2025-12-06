@@ -22,6 +22,7 @@ export default function RootLayout() {
           <Stack.Screen name="auth/register" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="chat/[chatId]" options={{ headerShown: true }} />
+          <Stack.Screen name="chat/new" options={{ headerShown: true }} />
         </Stack>
       </PaperProvider>
     </Provider>

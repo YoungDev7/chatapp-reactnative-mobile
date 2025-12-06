@@ -48,21 +48,33 @@ export default function ChatsScreen() {
     chat.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const renderChat = ({ item }: { item: typeof chatViewCollection[0] }) => (
-    <TouchableOpacity
-      style={styles.chatItem}
-      onPress={() =>
-        router.push(
-          `/chat/${item.viewId}?chatTitle=${encodeURIComponent(item.title)}` as any
-        )
-      }
-    >
-      <Ionicons name="people" size={20} color="#fff" style={styles.chatIcon} />
-      <View style={styles.chatInfo}>
-        <Text style={styles.chatTitle}>{item.title || 'Untitled Chat'}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+  const renderChat = ({ item }: { item: typeof chatViewCollection[0] }) => {
+    const lastMessage = item.messages && item.messages.length > 0 
+      ? item.messages[item.messages.length - 1] 
+      : null;
+    const senderDisplayName = lastMessage?.senderName || '';
+    
+    return (
+      <TouchableOpacity
+        style={styles.chatItem}
+        onPress={() =>
+          router.push(
+            `/chat/${item.id}?chatTitle=${encodeURIComponent(item.title)}` as any
+          )
+        }
+      >
+        <Ionicons name="people" size={20} color="#fff" style={styles.chatIcon} />
+        <View style={styles.chatInfo}>
+          <Text style={styles.chatTitle}>{item.title || 'Untitled Chat'}</Text>
+          {lastMessage && (
+            <Text style={styles.lastMessage} numberOfLines={1}>
+              {senderDisplayName}: {lastMessage.text}
+            </Text>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   if (isLoadingChatViews && chatViewCollection.length === 0) {
     return (
@@ -93,7 +105,7 @@ export default function ChatsScreen() {
       <FlatList
         data={filteredChats}
         renderItem={renderChat}
-        keyExtractor={(item) => item.viewId.toString()}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl
@@ -114,10 +126,7 @@ export default function ChatsScreen() {
       <FAB
         icon="plus"
         style={styles.fab}
-        onPress={() => {
-          // TODO: Navigate to create chat screen
-          console.log("Create new chat");
-        }}
+        onPress={() => router.push("/chat/new" as any)}
         color="#fff"
       />
     </View>
