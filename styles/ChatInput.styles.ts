@@ -37,4 +37,16 @@ export const styles = StyleSheet.create({
     width: 44,
     height: 44,
   },
+  emojiModalContainer: {
+    flex: 1,
+    backgroundColor: "#1f1f1f",
+    marginTop: "auto",
+    height: "50%",
+  },
+  emojiPickerHeader: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    backgroundColor: "#2a2a2a",
+    paddingHorizontal: 8,
+  },
 });

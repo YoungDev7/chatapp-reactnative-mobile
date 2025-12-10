@@ -1,5 +1,7 @@
 import { View } from "react-native";
 import { TextInput, IconButton } from "react-native-paper";
+import { useState } from "react";
+import EmojiPicker from "rn-emoji-keyboard";
 import { styles } from "../../styles/ChatInput.styles";
 
 interface ChatInputProps {
@@ -17,6 +19,12 @@ export default function ChatInput({
   disabled = false,
   sending = false,
 }: ChatInputProps) {
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+
+  const handleEmojiSelect = (emoji: any) => {
+    onChangeText(value + emoji.emoji);
+  };
+
   return (
     <View style={styles.inputContainer}>
       <View style={styles.inputWrapper}>
@@ -37,7 +45,7 @@ export default function ChatInput({
           icon="emoticon-happy-outline"
           iconColor="rgba(255, 255, 255, 0.5)"
           size={22}
-          onPress={() => {}}
+          onPress={() => setIsEmojiPickerOpen(true)}
           style={styles.emojiButton}
           disabled={disabled}
         />
@@ -52,6 +60,25 @@ export default function ChatInput({
         disabled={!value.trim() || disabled || sending}
         loading={sending}
         style={styles.sendButton}
+      />
+
+      <EmojiPicker
+        onEmojiSelected={handleEmojiSelect}
+        open={isEmojiPickerOpen}
+        onClose={() => setIsEmojiPickerOpen(false)}
+        theme={{
+          backdrop: "#00000099",
+          knob: "#ffffff",
+          container: "#1f1f1f",
+          header: "#2a2a2a",
+          skinTonesContainer: "#2a2a2a",
+          category: {
+            icon: "#ffffff",
+            iconActive: "#1976d2",
+            container: "#2a2a2a",
+            containerActive: "#1976d2",
+          },
+        }}
       />
     </View>
   );
