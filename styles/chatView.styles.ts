@@ -4,6 +4,7 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#181818",
+    alignItems: "stretch",
   },
   loadingContainer: {
     flex: 1,
@@ -25,8 +26,8 @@ export const styles = StyleSheet.create({
   },
   messageWithAvatar: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
+    alignItems: "flex-end",
+    gap: 10,
   },
   avatarContainer: {
     width: 32,
@@ -86,5 +87,20 @@ export const styles = StyleSheet.create({
   emojiOnlyBubble: {
     backgroundColor: "transparent",
     padding: 4,
+  },
+  timestampLeft: {
+    color: "rgba(255, 255, 255, 0.5)",
+    fontSize: 13,
+    marginTop: 4,
+    textAlign: "center",
+  },
+  timestampRight: {
+    color: "rgba(255, 255, 255, 0.5)",
+    fontSize: 13,
+    marginTop: 4,
+    textAlign: "center",
+  },
+  avatarHidden: {
+    opacity: 0,
   },
 });

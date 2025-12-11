@@ -16,14 +16,14 @@ export default function RootLayout() {
   return (
     <Provider store={store}>
       <PaperProvider theme={theme}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="auth/login" />
-          <Stack.Screen name="auth/register" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="chat/[chatId]" options={{ headerShown: true }} />
-          <Stack.Screen name="chat/new" options={{ headerShown: true }} />
-        </Stack>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="auth/login" />
+            <Stack.Screen name="auth/register" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="chat/[chatId]" options={{ headerShown: true }} />
+            <Stack.Screen name="chat/new" options={{ headerShown: true }} />
+          </Stack>
       </PaperProvider>
     </Provider>
   );

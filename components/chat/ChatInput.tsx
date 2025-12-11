@@ -1,6 +1,6 @@
-import { View } from "react-native";
+import { View, Animated, Easing } from "react-native";
 import { TextInput, IconButton } from "react-native-paper";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import EmojiPicker from "rn-emoji-keyboard";
 import { styles } from "../../styles/ChatInput.styles";
 
@@ -20,47 +20,78 @@ export default function ChatInput({
   sending = false,
 }: ChatInputProps) {
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  const sendButtonScale = useRef(new Animated.Value(1)).current;
+
+  // Animate send button on press
+  useEffect(() => {
+    if (sending) {
+      Animated.sequence([
+        Animated.timing(sendButtonScale, {
+          toValue: 0.95,
+          duration: 100,
+          easing: Easing.ease,
+          useNativeDriver: true,
+        }),
+        Animated.timing(sendButtonScale, {
+          toValue: 1,
+          duration: 100,
+          easing: Easing.ease,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [sending, sendButtonScale]);
 
   const handleEmojiSelect = (emoji: any) => {
     onChangeText(value + emoji.emoji);
   };
+
+  const handleSend = () => {
+    if (!value.trim()) return;
+    onSend();
+  };
+
+  const isSendDisabled = !value.trim() || disabled || sending;
 
   return (
     <View style={styles.inputContainer}>
       <View style={styles.inputWrapper}>
         <TextInput
           mode="outlined"
-          placeholder="Aa"
-          placeholderTextColor="rgba(255, 255, 255, 0.5)"
+          placeholder="Type a message..."
+          placeholderTextColor="rgba(255, 255, 255, 0.4)"
           value={value}
           onChangeText={onChangeText}
           multiline
+          maxLength={1000}
           style={styles.input}
           contentStyle={styles.inputContent}
           outlineStyle={{ borderWidth: 0 }}
           textColor="white"
-          disabled={disabled}
+          disabled={disabled || sending}
+          editable={!disabled && !sending}
         />
         <IconButton
           icon="emoticon-happy-outline"
-          iconColor="rgba(255, 255, 255, 0.5)"
-          size={22}
-          onPress={() => setIsEmojiPickerOpen(true)}
+          iconColor={disabled ? "rgba(255, 255, 255, 0.3)" : "rgba(255, 255, 255, 0.6)"}
+          size={25}
+          onPress={() => !disabled && setIsEmojiPickerOpen(true)}
           style={styles.emojiButton}
           disabled={disabled}
         />
       </View>
-      <IconButton
-        icon="send"
-        mode="contained"
-        containerColor={!value.trim() ? "rgba(25, 118, 210, 0.5)" : "#1976d2"}
-        iconColor="white"
-        size={22}
-        onPress={onSend}
-        disabled={!value.trim() || disabled || sending}
-        loading={sending}
-        style={styles.sendButton}
-      />
+
+      <Animated.View style={{ transform: [{ scale: sendButtonScale }] }}>
+        <IconButton
+          icon={sending ? "loading" : "send"}
+          mode="contained"
+          containerColor={isSendDisabled ? "rgba(25, 118, 210, 0.9)" : "#1976d2"}
+          iconColor="white"
+          onPress={handleSend}
+          disabled={isSendDisabled}
+          style={styles.sendButton}
+        />
+      </Animated.View>
 
       <EmojiPicker
         onEmojiSelected={handleEmojiSelect}
@@ -70,13 +101,11 @@ export default function ChatInput({
           backdrop: "#00000099",
           knob: "#ffffff",
           container: "#1f1f1f",
-          header: "#2a2a2a",
+          header: "#ffffff",
           skinTonesContainer: "#2a2a2a",
           category: {
             icon: "#ffffff",
-            iconActive: "#1976d2",
-            container: "#2a2a2a",
-            containerActive: "#1976d2",
+            container: "#000000",
           },
         }}
       />

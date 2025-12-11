@@ -5,7 +5,7 @@ export interface Message {
   id?: string;
   text: string;
   senderName: string;
-  senderAvatar?: string;
+  senderUid: string;
   createdAt?: string | number;
 }
 
@@ -122,6 +122,7 @@ const chatViewSlice = createSlice({
         chatViewCollection: [] as ChatView[],
         isLoadingChatViews: false,
         chatViewsError: null as string | null,
+        userAvatars: {} as Record<string, string>,
     },
     reducers: {
         setMessages: (state, action) => {
@@ -146,6 +147,12 @@ const chatViewSlice = createSlice({
                 messages: [],
                 error: null
             });
+        },
+        addUserAvatars: (state, action) => {
+            const userAvatarsObj = action.payload;
+            Object.entries(userAvatarsObj).forEach(([userId, avatarUrl]) => {
+                state.userAvatars[userId] = avatarUrl as string;
+            });
         }
     },
     extraReducers: (builder) => {
@@ -158,13 +165,21 @@ const chatViewSlice = createSlice({
           .addCase(fetchChatViews.fulfilled, (state, action) => {
               state.isLoadingChatViews = false;
               // Map the backend response to ensure each chat view has required fields
-              state.chatViewCollection = action.payload.map((chatView: any) => ({
-                id: chatView.id,
-                title: chatView.name || chatView.title || 'Untitled Chat',
-                isLoading: false,
-                messages: [],
-                error: null
-              }));
+              state.chatViewCollection = action.payload.map((chatView: any) => {
+                  // Store user avatars for this chat view
+                  if (chatView.userAvatars) {
+                      Object.entries(chatView.userAvatars).forEach(([userId, avatarUrl]) => {
+                          state.userAvatars[userId] = avatarUrl as string;
+                      });
+                  }
+                  return {
+                      id: chatView.id,
+                      title: chatView.name || chatView.title || 'Untitled Chat',
+                      isLoading: false,
+                      messages: [],
+                      error: null
+                  };
+              });
           })
           .addCase(fetchChatViews.rejected, (state, action) => {
               state.isLoadingChatViews = false;
@@ -218,5 +233,5 @@ const chatViewSlice = createSlice({
     }
 });
 
-export const { setMessages, addMessage, addChatView } = chatViewSlice.actions;
+export const { setMessages, addMessage, addChatView, addUserAvatars } = chatViewSlice.actions;
 export default chatViewSlice.reducer;
