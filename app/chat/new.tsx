@@ -12,13 +12,32 @@ import { Button } from "react-native-paper";
 import { Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { styles } from "../../styles/newChat.styles";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { createChatView, fetchChatViews } from "@/store/slices/chatViewSlice";
+import UserSearch from "../../components/UserSearch";
+import type { User } from "../../utils/userUtils";
 
 export default function NewChatScreen() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
+  const currentUser = useAppSelector((state) => state.auth.user);
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const handleSelectUser = (user: User) => {
+    if (user.uid === currentUser.uid) {
+      setError("You cannot add yourself to the chat");
+      return;
+    }
+    setSelectedUsers([...selectedUsers, user]);
+    setError("");
+  };
+
+  const handleRemoveUser = (userUid: string) => {
+    setSelectedUsers(selectedUsers.filter((u) => u.uid !== userUid));
+  };
 
   const handleCreate = async () => {
     if (!title.trim()) {
@@ -31,21 +50,23 @@ export default function NewChatScreen() {
       return;
     }
 
+    if (selectedUsers.length === 0) {
+      setError("Please add at least one user to the chat");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
     try {
-      // TODO: Dispatch action to create chat
-      // const result = await dispatch(createChat({
-      //   title: title.trim(),
-      //   description: description.trim(),
-      // })).unwrap();
+      const userUids = selectedUsers.map((user) => user.uid);
+      await dispatch(createChatView({
+        name: title.trim(),
+        userUids
+      })).unwrap();
 
-      // For now, just navigate back
-      console.log("Creating chat:", { title, description });
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Refresh chat list after creation
+      await dispatch(fetchChatViews()).unwrap();
 
       // Navigate back to chats
       router.back();
@@ -117,23 +138,15 @@ export default function NewChatScreen() {
                 </Text>
               </View>
 
-              {/* Description Input */}
+              {/* User Search */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Description (Optional)</Text>
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  placeholder="Enter chat description"
-                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                  value={description}
-                  onChangeText={setDescription}
-                  multiline
-                  numberOfLines={4}
-                  editable={!loading}
-                  maxLength={500}
+                <Text style={styles.label}>Add Users *</Text>
+                <UserSearch
+                  selectedUsers={selectedUsers}
+                  onSelectUser={handleSelectUser}
+                  onRemoveUser={handleRemoveUser}
+                  currentUserUid={currentUser.uid || ""}
                 />
-                <Text style={styles.charCount}>
-                  {description.length}/500
-                </Text>
               </View>
 
               {/* Error Message */}
@@ -148,7 +161,7 @@ export default function NewChatScreen() {
               <View style={styles.infoBox}>
                 <Ionicons name="information-circle" size={20} color="#1976d2" />
                 <Text style={styles.infoText}>
-                  You can add more members to this chat after creation.
+                  Search for users by name or email to add them to the chat.
                 </Text>
               </View>
             </View>
@@ -169,7 +182,7 @@ export default function NewChatScreen() {
             mode="contained"
             onPress={handleCreate}
             loading={loading}
-            disabled={loading || !title.trim()}
+            disabled={loading || !title.trim() || selectedUsers.length === 0}
             style={styles.createButton}
             labelStyle={styles.createButtonLabel}
           >
