@@ -7,6 +7,7 @@ import {
   Platform,
   Image,
 } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, Text } from "react-native-paper";
 import { styles } from "../../styles/chatView.styles";
 import { shouldDisplayAsLargeEmoji } from "../../utils/emojiHelper";
@@ -24,6 +25,7 @@ export default function ChatViewScreen() {
   const flatListRef = useRef<FlatList>(null);
   
   const currentUserName = useAppSelector((state) => state.auth.user.name || "");
+  const currentUserUid = useAppSelector((state) => state.auth.user.uid);
   const chatViewCollection = useAppSelector((state) => state.chatView.chatViewCollection);
   const userAvatars = useAppSelector((state) => state.chatView.userAvatars);
   const chatView = useAppSelector((state) => 
@@ -32,13 +34,7 @@ export default function ChatViewScreen() {
   
   const messages = chatView?.messages || [];
   const loading = chatView?.isLoading || false;
-
-  console.log('ChatViewScreen - chatId:', chatId);
-  console.log('ChatViewScreen - chatView found:', !!chatView);
-  console.log('ChatViewScreen - messages count:', messages.length);
-  console.log('ChatViewScreen - loading:', loading);
-
-  // Load chat views first if not loaded
+  
   useEffect(() => {
     if (chatViewCollection.length === 0) {
       console.log('Loading chat views...');
@@ -52,6 +48,21 @@ export default function ChatViewScreen() {
     }
   }, [chatId, dispatch]);
 
+  // Auto-scroll to bottom (newest messages) when messages change
+  // Since FlatList is inverted, scrolling to index 0 shows newest messages
+  useEffect(() => {
+    if (messages.length > 0 && flatListRef.current) {
+      // Small delay to ensure layout is complete
+      setTimeout(() => {
+        flatListRef.current?.scrollToIndex({ 
+          index: 0, 
+          animated: true,
+          viewPosition: 0
+        });
+      }, 100);
+    }
+  }, [messages.length]);
+
   const handleSend = async () => {
     if (!inputMessage.trim() || sending) return;
 
@@ -62,6 +73,15 @@ export default function ChatViewScreen() {
         text: inputMessage.trim() 
       })).unwrap();
       setInputMessage("");
+      
+      // Scroll to show the new message (index 0 in inverted list)
+      setTimeout(() => {
+        flatListRef.current?.scrollToIndex({ 
+          index: 0, 
+          animated: true,
+          viewPosition: 0
+        });
+      }, 100);
     } catch (error) {
       console.error("Failed to send message:", error);
     } finally {
@@ -81,10 +101,10 @@ export default function ChatViewScreen() {
     // - Previous message is from different sender
     const showSender = !previousMessage || previousMessage.senderName !== item.senderName;
     
-    // Show avatar only when showing sender name
-    const showAvatar = showSender;
+    // Always show avatar for other users' messages (not current user)
+    // For current user, never show avatar
     
-    // Show timestamp based on same logic
+    // Show timestamp based on time difference and sender change
     const showTimestampDisplay = shouldShowTimestamp(
       item.createdAt || '',
       previousMessage?.createdAt || null,
@@ -142,7 +162,8 @@ export default function ChatViewScreen() {
           </Text>
         )}
         <View style={[styles.messageContainer, styles.messageWithAvatar]}>
-          <View style={[styles.avatarContainer, !showAvatar && styles.avatarHidden]}>
+          {/* Always show avatar for other users */}
+          <View style={styles.avatarContainer}>
             {senderAvatarLink ? (
               <Image 
                 source={{ uri: senderAvatarLink }} 
@@ -217,6 +238,15 @@ export default function ChatViewScreen() {
           keyExtractor={(item, index) => item.id || index.toString()}
           contentContainerStyle={styles.messagesList}
           inverted={true}
+          onScrollToIndexFailed={(info) => {
+            // Fallback if scrollToIndex fails
+            setTimeout(() => {
+              flatListRef.current?.scrollToOffset({ 
+                offset: 0, 
+                animated: true 
+              });
+            }, 100);
+          }}
         />
 
         <ChatInput
