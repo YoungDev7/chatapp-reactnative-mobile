@@ -35,7 +35,7 @@ export default function ChatsScreen() {
       
       await Promise.all(messagePromises);
     } catch (err) {
-      console.error("Failed to fetch chats:", err);
+
     } finally {
       setRefreshing(false);
     }

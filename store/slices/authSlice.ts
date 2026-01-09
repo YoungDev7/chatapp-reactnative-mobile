@@ -66,7 +66,6 @@ export const validateToken = createAsyncThunk(
       return { token, avatarLink };
 
     } catch (error: unknown) {
-      console.error("Error validating token", error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const responseData = (error && typeof error === 'object' && 'response' in error) 
         ? (error as { response?: { data?: unknown } }).response?.data 
@@ -91,7 +90,6 @@ export const handleLogout = createAsyncThunk(
       await api.post('/auth/logout');
       dispatch(clearAuth());
     }catch(error){
-      console.error("logout error: " + error);
       dispatch(clearAuth());
     }
   }
@@ -145,7 +143,7 @@ const clearAuthState = (state: AuthState) => {
   state.token = null;
   state.user = { email: null, name: null, uid: null, avatarLink: null };
   state.isValidating = false;
-  AsyncStorage.multiRemove(['accessToken', 'user']).catch(console.error);
+  AsyncStorage.multiRemove(['accessToken', 'user']).catch(() => {});
 };
 
 /**
@@ -184,13 +182,13 @@ const authSlice = createSlice({
       state.token = newToken;
       
       if (newToken) {
-        AsyncStorage.setItem('accessToken', newToken).catch(console.error);
+        AsyncStorage.setItem('accessToken', newToken).catch(() => {});
         updateUserFromToken(state, newToken);
         if (state.user.uid) {
-          AsyncStorage.setItem('user', JSON.stringify(state.user)).catch(console.error);
+          AsyncStorage.setItem('user', JSON.stringify(state.user)).catch(() => {});
         }
       } else {
-        AsyncStorage.multiRemove(['accessToken', 'user']).catch(console.error);
+        AsyncStorage.multiRemove(['accessToken', 'user']).catch(() => {});
       }
     },
     clearAuth: (state) => {
@@ -206,7 +204,7 @@ const authSlice = createSlice({
     setAvatar: (state, action) => {
       state.user.avatarLink = action.payload;
       if (state.user.uid) {
-        AsyncStorage.setItem('user', JSON.stringify(state.user)).catch(console.error);
+        AsyncStorage.setItem('user', JSON.stringify(state.user)).catch(() => {});
       }
     },
   },
@@ -237,10 +235,10 @@ const authSlice = createSlice({
         state.loginError = null;
         const token = action.payload.access_token;
         state.token = token;
-        AsyncStorage.setItem('accessToken', token).catch(console.error);
+        AsyncStorage.setItem('accessToken', token).catch(() => {});
         updateUserFromToken(state, token);
         if (state.user.uid) {
-          AsyncStorage.setItem('user', JSON.stringify(state.user)).catch(console.error);
+          AsyncStorage.setItem('user', JSON.stringify(state.user)).catch(() => {});
         }
       })
       .addCase(login.rejected, (state, action) => {

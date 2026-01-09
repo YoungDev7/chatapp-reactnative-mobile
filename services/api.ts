@@ -18,12 +18,8 @@ api.interceptors.request.use(
       const token = await AsyncStorage.getItem('accessToken');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
-        console.log('✅ Request to:', config.url, 'with token:', token.substring(0, 20) + '...');
-      } else {
-        console.warn('⚠️ No auth token found in storage for request to:', config.url);
       }
     } catch (error) {
-      console.error('❌ Error getting token from storage:', error);
     }
     return config;
   },
@@ -38,16 +34,9 @@ api.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       // Token expired or invalid, clear storage
-      console.error('401 Unauthorized - clearing auth storage');
       await AsyncStorage.multiRemove(['accessToken', 'user']);
     } else if (error.response?.status === 403) {
       // Forbidden - user doesn't have permission
-      console.error('403 Forbidden:', {
-        url: error.config?.url,
-        method: error.config?.method,
-        data: error.response?.data,
-        hasAuthHeader: !!error.config?.headers?.Authorization
-      });
     }
     return Promise.reject(error);
   }

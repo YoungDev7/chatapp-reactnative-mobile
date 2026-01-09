@@ -24,9 +24,7 @@ export default function ProfileScreen() {
           dispatch(setAvatar(response.data.avatarLink));
         }
       } catch (error: any) {
-        if (error.response?.status !== 404) {
-          console.error("Failed to fetch avatar:", error);
-        }
+        // Silent error for missing avatars
       }
     };
 
@@ -51,8 +49,6 @@ export default function ProfileScreen() {
       dispatch(setAvatar(uri));
       Alert.alert("Success", "Avatar updated successfully!");
     } catch (error: any) {
-      console.error("Failed to save avatar:", error);
-      console.error("Error details:", error.response?.status, error.response?.data);
       Alert.alert(
         "Error",
         error.response?.data?.message || "Failed to update avatar. Please try again."
@@ -122,7 +118,7 @@ export default function ProfileScreen() {
                   await dispatch(handleLogout()).unwrap();
                   router.replace("/auth/login");
                 } catch (error) {
-                  console.error("Logout error:", error);
+                  // Silent error handling
                   router.replace("/auth/login");
                 }
               }}

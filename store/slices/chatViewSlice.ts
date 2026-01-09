@@ -14,7 +14,6 @@ export const fetchChatViews = createAsyncThunk(
       const response = await api.get('/chatviews');
       return response.data;
     } catch (error: unknown) {
-      console.error('Error fetching chat views:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const responseData = (error && typeof error === 'object' && 'response' in error)
         ? (error as { response?: { data?: unknown } }).response?.data
@@ -42,16 +41,6 @@ export const sendMessage = createAsyncThunk(
       const response = await api.post(`/chatviews/${chatViewId}/messages`, messagePayload);
       return { chatViewId, message: response.data };
     } catch (error: unknown) {
-      const axiosError = error as any;
-      console.error('❌ Error sending message:', {
-        status: axiosError.response?.status,
-        statusText: axiosError.response?.statusText,
-        data: axiosError.response?.data,
-        message: axiosError.message,
-        chatViewId,
-        headers: axiosError.config?.headers
-      });
-      
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const responseData = (error && typeof error === 'object' && 'response' in error)
         ? (error as { response?: { data?: unknown } }).response?.data
@@ -71,7 +60,6 @@ export const createChatView = createAsyncThunk(
       await api.post('/chatviews', { name, userUids });
       // No need to return anything - the chat list will be refreshed
     } catch (error: unknown) {
-      console.error('Error creating chatview:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const responseData = (error && typeof error === 'object' && 'response' in error)
         ? (error as { response?: { data?: unknown } }).response?.data
@@ -103,7 +91,6 @@ export const fetchMessages = createAsyncThunk(
         messages: response.data 
       };
     } catch (error: unknown) {
-      console.error('Error fetching messages:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const responseData = (error && typeof error === 'object' && 'response' in error) 
         ? (error as { response?: { data?: unknown } }).response?.data 
