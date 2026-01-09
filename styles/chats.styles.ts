@@ -17,6 +17,11 @@ export const styles = StyleSheet.create({
     borderRadius: 4,
     marginBottom: 8,
   },
+  chatItemUnread: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#1976d2",
+    backgroundColor: "rgba(25, 118, 210, 0.15)",
+  },
   chatIcon: {
     marginRight: 12,
   },
@@ -29,10 +34,17 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: 4,
   },
+  chatTitleUnread: {
+    fontWeight: "700",
+  },
   lastMessage: {
     color: "rgba(255, 255, 255, 0.6)",
     fontSize: 14,
     fontWeight: "400",
+  },
+  lastMessageUnread: {
+    fontWeight: "600",
+    color: "rgba(255, 255, 255, 0.85)",
   },
   emptyContainer: {
     alignItems: "center",

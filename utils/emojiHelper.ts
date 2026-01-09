@@ -4,9 +4,9 @@
  * @returns true if the text contains only emojis
  */
 export const isOnlyEmojis = (text: string): boolean => {
+  if (!text) return false;
   const trimmedText = text.trim();
   
-  // Remove all emojis and whitespace, if nothing remains, it was only emojis
   const emojiRegex = /[\p{Emoji}\p{Emoji_Presentation}\p{Emoji_Modifier}\p{Emoji_Modifier_Base}\p{Emoji_Component}]/gu;
   const textWithoutEmojis = trimmedText.replace(emojiRegex, '').replace(/\s/g, '');
   
@@ -19,6 +19,7 @@ export const isOnlyEmojis = (text: string): boolean => {
  * @returns the number of emojis
  */
 export const countEmojis = (text: string): number => {
+  if (!text) return 0;
   const emojiRegex = /[\p{Emoji}\p{Emoji_Presentation}\p{Emoji_Modifier_Base}]/gu;
   const matches = text.match(emojiRegex);
   return matches ? matches.length : 0;
@@ -30,7 +31,7 @@ export const countEmojis = (text: string): number => {
  * @returns true if the message should be displayed as a large emoji
  */
 export const shouldDisplayAsLargeEmoji = (text: string): boolean => {
-  if (!isOnlyEmojis(text)) {
+  if (!text || !isOnlyEmojis(text)) {
     return false;
   }
   

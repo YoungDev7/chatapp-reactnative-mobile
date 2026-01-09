@@ -12,7 +12,7 @@ import { useRouter } from "expo-router";
 import SearchBar from "../../components/SearchBar";
 import { styles } from "../../styles/chats.styles";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchChatViews } from "@/store/slices/chatViewSlice";
+import { fetchChatViews, selectSortedChats } from "@/store/slices/chatViewSlice";
 
 export default function ChatsScreen() {
   const router = useRouter();
@@ -20,7 +20,8 @@ export default function ChatsScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   
-  const { chatViewCollection, isLoadingChatViews, chatViewsError } = useAppSelector(
+  const sortedChats = useAppSelector(selectSortedChats);
+  const { isLoadingChatViews, chatViewsError } = useAppSelector(
     (state) => state.chatView
   );
 
@@ -44,19 +45,23 @@ export default function ChatsScreen() {
     fetchChats();
   };
 
-  const filteredChats = chatViewCollection.filter((chat) =>
+  const filteredChats = sortedChats.filter((chat) =>
     chat.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const renderChat = ({ item }: { item: typeof chatViewCollection[0] }) => {
+  const renderChat = ({ item }: { item: typeof sortedChats[0] }) => {
     const lastMessage = item.messages && item.messages.length > 0 
       ? item.messages[item.messages.length - 1] 
       : null;
     const senderDisplayName = lastMessage?.senderName || '';
+    const hasUnread = (item.unreadCount || 0) > 0;
     
     return (
       <TouchableOpacity
-        style={styles.chatItem}
+        style={[
+          styles.chatItem,
+          hasUnread && styles.chatItemUnread
+        ]}
         onPress={() =>
           router.push(
             `/chat/${item.id}?chatTitle=${encodeURIComponent(item.title)}` as any
@@ -65,10 +70,23 @@ export default function ChatsScreen() {
       >
         <Ionicons name="people" size={20} color="#fff" style={styles.chatIcon} />
         <View style={styles.chatInfo}>
-          <Text style={styles.chatTitle}>{item.title || 'Untitled Chat'}</Text>
-          {lastMessage && (
-            <Text style={styles.lastMessage} numberOfLines={1}>
+          <Text style={[
+            styles.chatTitle,
+            hasUnread && styles.chatTitleUnread
+          ]}>
+            {item.title || 'Untitled Chat'}
+          </Text>
+          {/* Always show last message or placeholder */}
+          {lastMessage ? (
+            <Text style={[
+              styles.lastMessage,
+              hasUnread && styles.lastMessageUnread
+            ]} numberOfLines={1}>
               {senderDisplayName}: {lastMessage.text}
+            </Text>
+          ) : (
+            <Text style={[styles.lastMessage, { fontStyle: 'italic', opacity: 0.6 }]} numberOfLines={1}>
+              No messages yet
             </Text>
           )}
         </View>
@@ -76,7 +94,7 @@ export default function ChatsScreen() {
     );
   };
 
-  if (isLoadingChatViews && chatViewCollection.length === 0) {
+  if (isLoadingChatViews && sortedChats.length === 0) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#1976d2" />

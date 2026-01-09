@@ -90,17 +90,16 @@ export const styles = StyleSheet.create({
   },
   timestampLeft: {
     color: "rgba(255, 255, 255, 0.5)",
-    fontSize: 13,
-    marginTop: 4,
+    fontSize: 12,
+    marginBottom: 4,
+    marginTop: 8,
     textAlign: "center",
   },
   timestampRight: {
     color: "rgba(255, 255, 255, 0.5)",
-    fontSize: 13,
-    marginTop: 4,
+    fontSize: 12,
+    marginBottom: 4,
+    marginTop: 8,
     textAlign: "center",
-  },
-  avatarHidden: {
-    opacity: 0,
   },
 });

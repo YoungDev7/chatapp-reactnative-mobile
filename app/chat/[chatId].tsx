@@ -1,21 +1,15 @@
-import { useLocalSearchParams, Stack } from "expo-router";
-import { useState, useEffect, useRef } from "react";
-import {
-  View,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  Image,
-} from "react-native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useLocalSearchParams, Stack, useFocusEffect } from "expo-router";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { View, FlatList, KeyboardAvoidingView, Platform, Image } from "react-native";
 import { ActivityIndicator, Text } from "react-native-paper";
 import { styles } from "../../styles/chatView.styles";
 import { shouldDisplayAsLargeEmoji } from "../../utils/emojiHelper";
-import { formatMessageTimestamp, shouldShowTimestamp } from "../../utils/timestampUtils";
+import { formatMessageTimestamp } from "../../utils/timestampUtils";
 import ChatInput from "../../components/chat/ChatInput";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchMessages, sendMessage, fetchChatViews, type Message } from "@/store/slices/chatViewSlice";
+import { fetchMessages, sendMessage, fetchChatViews, markChatAsRead, addMessage, type Message } from "@/store/slices/chatViewSlice";
 import { Ionicons } from "@expo/vector-icons";
+import socketService from "@/services/socketService";
 
 export default function ChatViewScreen() {
   const { chatId, chatTitle } = useLocalSearchParams<{ chatId: string; chatTitle: string }>();
@@ -25,7 +19,7 @@ export default function ChatViewScreen() {
   const flatListRef = useRef<FlatList>(null);
   
   const currentUserName = useAppSelector((state) => state.auth.user.name || "");
-  const currentUserUid = useAppSelector((state) => state.auth.user.uid);
+  const currentUserUid = useAppSelector((state) => state.auth.user.uid || "");
   const chatViewCollection = useAppSelector((state) => state.chatView.chatViewCollection);
   const userAvatars = useAppSelector((state) => state.chatView.userAvatars);
   const chatView = useAppSelector((state) => 
@@ -37,7 +31,6 @@ export default function ChatViewScreen() {
   
   useEffect(() => {
     if (chatViewCollection.length === 0) {
-      console.log('Loading chat views...');
       dispatch(fetchChatViews());
     }
   }, [dispatch, chatViewCollection.length]);
@@ -48,11 +41,32 @@ export default function ChatViewScreen() {
     }
   }, [chatId, dispatch]);
 
-  // Auto-scroll to bottom (newest messages) when messages change
-  // Since FlatList is inverted, scrolling to index 0 shows newest messages
+  useEffect(() => {
+    if (!chatId) return;
+
+    socketService.connect().then(() => {
+      socketService.subscribeToChat(chatId);
+    });
+
+    const unsubscribe = socketService.onMessage((message: Message) => {
+      dispatch(addMessage({ id: chatId, message }));
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [chatId, dispatch]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (chatId) {
+        dispatch(markChatAsRead(chatId));
+      }
+    }, [chatId, dispatch])
+  );
+
   useEffect(() => {
     if (messages.length > 0 && flatListRef.current) {
-      // Small delay to ensure layout is complete
       setTimeout(() => {
         flatListRef.current?.scrollToIndex({ 
           index: 0, 
@@ -66,15 +80,26 @@ export default function ChatViewScreen() {
   const handleSend = async () => {
     if (!inputMessage.trim() || sending) return;
 
+    const messageText = inputMessage.trim();
+    setInputMessage("");
     setSending(true);
+    
+    const tempMessage: Message = {
+      id: `temp-${Date.now()}`,
+      text: messageText,
+      senderName: currentUserName,
+      senderUid: currentUserUid,
+      createdAt: new Date().toISOString()
+    };
+    
+    dispatch(addMessage({ id: chatId, message: tempMessage }));
+    
     try {
       await dispatch(sendMessage({ 
         chatViewId: chatId, 
-        text: inputMessage.trim() 
+        text: messageText
       })).unwrap();
-      setInputMessage("");
       
-      // Scroll to show the new message (index 0 in inverted list)
       setTimeout(() => {
         flatListRef.current?.scrollToIndex({ 
           index: 0, 
@@ -90,32 +115,17 @@ export default function ChatViewScreen() {
   };
 
   const renderMessage = ({ item, index }: { item: Message; index: number }) => {
-    const isCurrentUser = item.senderName === currentUserName;
+    const isCurrentUser = item.senderUid === currentUserUid;
     const isLargeEmoji = shouldDisplayAsLargeEmoji(item.text);
     
-    // Get previous message (remember FlatList is inverted, so index-1 is actually the next message in time)
     const previousMessage = index < messages.length - 1 ? messages[messages.length - 1 - (index + 1)] : null;
-    
-    // Show sender name only if:
-    // - First message in chat, OR
-    // - Previous message is from different sender
-    const showSender = !previousMessage || previousMessage.senderName !== item.senderName;
-    
-    // Always show avatar for other users' messages (not current user)
-    // For current user, never show avatar
-    
-    // Show timestamp based on time difference and sender change
-    const showTimestampDisplay = shouldShowTimestamp(
-      item.createdAt || '',
-      previousMessage?.createdAt || null,
-      item.senderName,
-      previousMessage?.senderName || null
-    );
+    const showSender = !previousMessage || previousMessage.senderUid !== item.senderUid;
+
     
     if (isCurrentUser) {
       return (
-        <>
-          {showTimestampDisplay && item.createdAt && (
+        <View>
+          {item.createdAt && (
             <Text variant="bodySmall" style={styles.timestampRight}>
               {formatMessageTimestamp(item.createdAt)}
             </Text>
@@ -139,35 +149,32 @@ export default function ChatViewScreen() {
               </Text>
             </View>
           </View>
-        </>
+        </View>
       );
     }
 
-    // Other users' messages (left side, with avatar)
-    const initials = item.senderName
+    const initials = (item.senderName || 'U')
       .split(' ')
       .map(n => n[0])
       .join('')
       .toUpperCase()
       .slice(0, 1);
 
-    // Look up sender's avatar from userAvatars map using senderUid
     const senderAvatarLink = userAvatars[item.senderUid] || '';
 
     return (
-      <>
-        {showTimestampDisplay && item.createdAt && (
+      <View>
+        {item.createdAt && (
           <Text variant="bodySmall" style={styles.timestampLeft}>
             {formatMessageTimestamp(item.createdAt)}
           </Text>
         )}
         <View style={[styles.messageContainer, styles.messageWithAvatar]}>
-          {/* Always show avatar for other users */}
           <View style={styles.avatarContainer}>
             {senderAvatarLink ? (
               <Image 
-                source={{ uri: senderAvatarLink }} 
-                style={styles.avatar}
+              source={{ uri: senderAvatarLink }} 
+              style={styles.avatar}
               />
             ) : (
               <Text style={styles.avatarPlaceholder}>{initials}</Text>
@@ -192,7 +199,7 @@ export default function ChatViewScreen() {
             </View>
           </View>
         </View>
-      </>
+      </View>
     );
   };
 
@@ -239,7 +246,6 @@ export default function ChatViewScreen() {
           contentContainerStyle={styles.messagesList}
           inverted={true}
           onScrollToIndexFailed={(info) => {
-            // Fallback if scrollToIndex fails
             setTimeout(() => {
               flatListRef.current?.scrollToOffset({ 
                 offset: 0, 
