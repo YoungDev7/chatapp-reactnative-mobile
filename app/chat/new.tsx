@@ -65,10 +65,8 @@ export default function NewChatScreen() {
         userUids
       })).unwrap();
 
-      // Refresh chat list after creation
       await dispatch(fetchChatViews()).unwrap();
 
-      // Navigate back to chats
       router.back();
     } catch (err) {
       setError(
@@ -105,20 +103,13 @@ export default function NewChatScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.content}>
-            {/* Header Icon */}
             <View style={styles.iconContainer}>
               <Ionicons name="chatbubble-ellipses" size={64} color="#1976d2" />
             </View>
 
-            {/* Title */}
             <Text style={styles.title}>Create a New Chat</Text>
-            <Text style={styles.subtitle}>
-              Start a conversation with your team
-            </Text>
-
-            {/* Form */}
+          
             <View style={styles.form}>
-              {/* Chat Name Input */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Chat Name *</Text>
                 <TextInput
@@ -138,7 +129,6 @@ export default function NewChatScreen() {
                 </Text>
               </View>
 
-              {/* User Search */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Add Users *</Text>
                 <UserSearch
@@ -149,26 +139,16 @@ export default function NewChatScreen() {
                 />
               </View>
 
-              {/* Error Message */}
               {error && (
                 <View style={styles.errorContainer}>
                   <Ionicons name="alert-circle" size={20} color="#ff6b6b" />
                   <Text style={styles.errorText}>{error}</Text>
                 </View>
               )}
-
-              {/* Info Box */}
-              <View style={styles.infoBox}>
-                <Ionicons name="information-circle" size={20} color="#1976d2" />
-                <Text style={styles.infoText}>
-                  Search for users by name or email to add them to the chat.
-                </Text>
-              </View>
             </View>
           </View>
         </ScrollView>
 
-        {/* Action Buttons */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.cancelButton}

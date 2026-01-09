@@ -1,14 +1,6 @@
 import { router } from "expo-router";
 import { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  Image,
-  Alert,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Image, Alert, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { styles } from "../../styles/profile.styles";
 import AvatarModal from "../../components/AvatarModal";
@@ -24,7 +16,6 @@ export default function ProfileScreen() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    // Fetch avatar on mount
     const fetchAvatar = async () => {
       try {
         const response = await api.get('/user/avatar');
@@ -33,9 +24,8 @@ export default function ProfileScreen() {
           dispatch(setAvatar(response.data.avatarLink));
         }
       } catch (error: any) {
-        // 404 is expected if user has no avatar yet
         if (error.response?.status !== 404) {
-          console.log("Error fetching avatar:", error.response?.status, error.response?.data);
+          console.error("Failed to fetch avatar:", error);
         }
       }
     };

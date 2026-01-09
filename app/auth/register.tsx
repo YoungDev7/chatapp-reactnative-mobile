@@ -1,12 +1,6 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import {
-  View,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Alert,
-} from "react-native";
+import { View, KeyboardAvoidingView, Platform, ScrollView, Alert } from "react-native";
 import { TextInput, Button, Text, Surface } from "react-native-paper";
 import { styles } from "../../styles/register.styles";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -53,7 +47,6 @@ export default function Register() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           <Text variant="displaySmall" style={styles.title}>Create Account</Text>
-          {/* <Text variant="bodyLarge" style={styles.subtitle}>Sign up to get started</Text> */}
 
           <Surface style={styles.form} elevation={0}>
             <TextInput

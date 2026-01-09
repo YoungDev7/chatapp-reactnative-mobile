@@ -3,14 +3,7 @@ import { TextInput, IconButton } from "react-native-paper";
 import { useState, useRef, useEffect } from "react";
 import EmojiPicker from "rn-emoji-keyboard";
 import { styles } from "../../styles/ChatInput.styles";
-
-interface ChatInputProps {
-  value: string;
-  onChangeText: (text: string) => void;
-  onSend: () => void;
-  disabled?: boolean;
-  sending?: boolean;
-}
+import { ChatInputProps } from "../../types/chatInput";  
 
 export default function ChatInput({
   value,
@@ -22,7 +15,6 @@ export default function ChatInput({
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const sendButtonScale = useRef(new Animated.Value(1)).current;
 
-  // Animate send button on press
   useEffect(() => {
     if (sending) {
       Animated.sequence([

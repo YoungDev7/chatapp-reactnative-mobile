@@ -1,9 +1,10 @@
 import { router } from "expo-router";
 import { useEffect } from "react";
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, ActivityIndicator } from "react-native";
 import { useAppDispatch } from "@/store/hooks";
 import { validateToken } from "@/store/slices/authSlice";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { styles } from "@/styles/index.styles";
 
 export default function Index() {
   const dispatch = useAppDispatch();
@@ -13,7 +14,6 @@ export default function Index() {
       try {
         const token = await AsyncStorage.getItem('accessToken');
         if (token) {
-          // Validate token with server
           await dispatch(validateToken()).unwrap();
           router.replace("/(tabs)/chats");
         } else {
@@ -21,7 +21,6 @@ export default function Index() {
         }
       } catch (error) {
         console.error("Token validation failed:", error);
-        // Clear invalid token
         await AsyncStorage.removeItem('accessToken');
         await AsyncStorage.removeItem('refreshToken');
         router.replace("/auth/login");
@@ -38,18 +37,3 @@ export default function Index() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#1a1a1a",
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "white",
-    marginBottom: 20,
-  },
-});

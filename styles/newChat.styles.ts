@@ -24,12 +24,6 @@ export const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 8,
   },
-  subtitle: {
-    fontSize: 16,
-    color: "rgba(255, 255, 255, 0.6)",
-    textAlign: "center",
-    marginBottom: 32,
-  },
   form: {
     gap: 20,
   },

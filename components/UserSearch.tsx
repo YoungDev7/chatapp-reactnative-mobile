@@ -10,13 +10,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { searchUser, type User } from "../utils/userUtils";
 import { styles } from "../styles/userSearch.styles";
-
-interface UserSearchProps {
-  selectedUsers: User[];
-  onSelectUser: (user: User) => void;
-  onRemoveUser: (userUid: string) => void;
-  currentUserUid: string;
-}
+import { UserSearchProps } from "@/types/userSearch";
 
 export default function UserSearch({
   selectedUsers,
@@ -87,7 +81,6 @@ export default function UserSearch({
 
   return (
     <View style={styles.container}>
-      {/* Search Input */}
       <View style={styles.searchContainer}>
         <Ionicons
           name="search"
@@ -107,7 +100,6 @@ export default function UserSearch({
         {isSearching && <ActivityIndicator size="small" color="#1976d2" />}
       </View>
 
-      {/* Error Message */}
       {error && (
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle" size={16} color="#ff6b6b" />
@@ -115,7 +107,6 @@ export default function UserSearch({
         </View>
       )}
 
-      {/* Search Results */}
       {searchResults.length > 0 && (
         <View style={styles.resultsContainer}>
           <FlatList
@@ -137,7 +128,6 @@ export default function UserSearch({
         </View>
       )}
 
-      {/* Selected Users */}
       {selectedUsers.length > 0 && (
         <View style={styles.selectedContainer}>
           <Text style={styles.selectedTitle}>Selected Users:</Text>
