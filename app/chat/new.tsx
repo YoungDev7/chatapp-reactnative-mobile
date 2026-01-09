@@ -83,12 +83,19 @@ export default function NewChatScreen() {
       <Stack.Screen
         options={{
           title: "Create New Chat",
+          headerStyle: {
+            backgroundColor: "#181818",
+          },
+          headerTintColor: "#fff",
+          headerTitleStyle: {
+            color: "#fff",
+          },
           headerLeft: () => (
             <TouchableOpacity
               onPress={() => router.back()}
               style={styles.headerButton}
             >
-              <Ionicons name="close" size={24} color="#1976d2" />
+              <Ionicons name="close" size={24} color="#fff" />
             </TouchableOpacity>
           ),
         }}

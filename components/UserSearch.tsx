@@ -3,7 +3,6 @@ import {
   View,
   TextInput,
   Text,
-  FlatList,
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
@@ -23,7 +22,6 @@ export default function UserSearch({
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Search for users with debounce
   const searchUsers = useCallback(
     async (query: string) => {
       if (!query.trim()) {
@@ -42,7 +40,6 @@ export default function UserSearch({
           return;
         }
 
-        // Don't show already selected users or current user in search results
         const isAlreadySelected = selectedUsers.some(
           (u) => u.uid === foundUser.uid
         );
@@ -63,7 +60,6 @@ export default function UserSearch({
     [selectedUsers, currentUserUid]
   );
 
-  // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
       searchUsers(searchQuery);
@@ -109,43 +105,36 @@ export default function UserSearch({
 
       {searchResults.length > 0 && (
         <View style={styles.resultsContainer}>
-          <FlatList
-            data={searchResults}
-            keyExtractor={(item) => item.uid}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.resultItem}
-                onPress={() => handleSelectUser(item)}
-              >
-                <View style={styles.resultInfo}>
-                  <Text style={styles.resultName}>{item.name}</Text>
-                  <Text style={styles.resultEmail}>{item.email}</Text>
-                </View>
-                <Ionicons name="add-circle" size={24} color="#1976d2" />
-              </TouchableOpacity>
-            )}
-          />
+          {searchResults.map((item) => (
+            <TouchableOpacity
+              key={item.uid}
+              style={styles.resultItem}
+              onPress={() => handleSelectUser(item)}
+            >
+              <View style={styles.resultInfo}>
+                <Text style={styles.resultName}>{item.name}</Text>
+                <Text style={styles.resultEmail}>{item.email}</Text>
+              </View>
+              <Ionicons name="add-circle" size={24} color="#1976d2" />
+            </TouchableOpacity>
+          ))}
         </View>
       )}
 
       {selectedUsers.length > 0 && (
         <View style={styles.selectedContainer}>
           <Text style={styles.selectedTitle}>Selected Users:</Text>
-          <FlatList
-            data={selectedUsers}
-            keyExtractor={(item) => item.uid}
-            renderItem={({ item }) => (
-              <View style={styles.selectedItem}>
-                <View style={styles.selectedInfo}>
-                  <Text style={styles.selectedName}>{item.name}</Text>
-                  <Text style={styles.selectedEmail}>{item.email}</Text>
-                </View>
-                <TouchableOpacity onPress={() => onRemoveUser(item.uid)}>
-                  <Ionicons name="close-circle" size={24} color="#ff6b6b" />
-                </TouchableOpacity>
+          {selectedUsers.map((item) => (
+            <View key={item.uid} style={styles.selectedItem}>
+              <View style={styles.selectedInfo}>
+                <Text style={styles.selectedName}>{item.name}</Text>
+                <Text style={styles.selectedEmail}>{item.email}</Text>
               </View>
-            )}
-          />
+              <TouchableOpacity onPress={() => onRemoveUser(item.uid)}>
+                <Ionicons name="close-circle" size={24} color="#ff6b6b" />
+              </TouchableOpacity>
+            </View>
+          ))}
         </View>
       )}
     </View>

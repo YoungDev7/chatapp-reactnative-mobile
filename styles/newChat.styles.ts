@@ -47,11 +47,6 @@ export const styles = StyleSheet.create({
     color: "#fff",
     minHeight: 48,
   },
-  textArea: {
-    minHeight: 120,
-    paddingTop: 12,
-    textAlignVertical: "top",
-  },
   charCount: {
     fontSize: 12,
     color: "rgba(255, 255, 255, 0.4)",
@@ -73,21 +68,6 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: "#ff6b6b",
     fontWeight: "500",
-  },
-  infoBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(25, 118, 210, 0.1)",
-    borderRadius: 8,
-    padding: 12,
-    gap: 12,
-    marginTop: 8,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 13,
-    color: "rgba(25, 118, 210, 0.9)",
-    lineHeight: 18,
   },
   buttonContainer: {
     position: "absolute",
@@ -120,6 +100,7 @@ export const styles = StyleSheet.create({
   createButton: {
     flex: 1,
     borderRadius: 8,
+    color: "#fff",
     backgroundColor: "#1976d2",
   },
   createButtonLabel: {
