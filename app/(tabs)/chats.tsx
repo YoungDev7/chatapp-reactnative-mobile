@@ -12,7 +12,7 @@ import { useRouter } from "expo-router";
 import SearchBar from "../../components/SearchBar";
 import { styles } from "../../styles/chats.styles";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchChatViews, selectSortedChats } from "@/store/slices/chatViewSlice";
+import { fetchChatViews, fetchMessages, selectSortedChats } from "@/store/slices/chatViewSlice";
 
 export default function ChatsScreen() {
   const router = useRouter();
@@ -27,7 +27,13 @@ export default function ChatsScreen() {
 
   const fetchChats = async () => {
     try {
-      await dispatch(fetchChatViews()).unwrap();
+      const chatViews = await dispatch(fetchChatViews()).unwrap();
+      
+      const messagePromises = chatViews.map((chat: any) => 
+        dispatch(fetchMessages(chat.id))
+      );
+      
+      await Promise.all(messagePromises);
     } catch (err) {
       console.error("Failed to fetch chats:", err);
     } finally {
@@ -76,7 +82,6 @@ export default function ChatsScreen() {
           ]}>
             {item.title || 'Untitled Chat'}
           </Text>
-          {/* Always show last message or placeholder */}
           {lastMessage ? (
             <Text style={[
               styles.lastMessage,

@@ -1,13 +1,14 @@
 import { useLocalSearchParams, Stack, useFocusEffect } from "expo-router";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { View, FlatList, KeyboardAvoidingView, Platform, Image } from "react-native";
-import { ActivityIndicator, Text } from "react-native-paper";
+import { View, FlatList, KeyboardAvoidingView, Platform, Image, ActivityIndicator } from "react-native";
+import { Text } from "react-native-paper";
 import { styles } from "../../styles/chatView.styles";
 import { shouldDisplayAsLargeEmoji } from "../../utils/emojiHelper";
 import { formatMessageTimestamp } from "../../utils/timestampUtils";
 import ChatInput from "../../components/chat/ChatInput";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchMessages, sendMessage, fetchChatViews, markChatAsRead, addMessage, type Message } from "@/store/slices/chatViewSlice";
+import { fetchMessages, sendMessage, markChatAsRead, addMessage, setCurrentlyDisplayedChatView } from "@/store/slices/chatViewSlice";
+import type { Message } from "@/types/chatViewSliceTypes";
 import { Ionicons } from "@expo/vector-icons";
 import socketService from "@/services/socketService";
 
@@ -20,7 +21,6 @@ export default function ChatViewScreen() {
   
   const currentUserName = useAppSelector((state) => state.auth.user.name || "");
   const currentUserUid = useAppSelector((state) => state.auth.user.uid || "");
-  const chatViewCollection = useAppSelector((state) => state.chatView.chatViewCollection);
   const userAvatars = useAppSelector((state) => state.chatView.userAvatars);
   const chatView = useAppSelector((state) => 
     state.chatView.chatViewCollection.find(v => v.id === chatId)
@@ -30,12 +30,6 @@ export default function ChatViewScreen() {
   const loading = chatView?.isLoading || false;
   
   useEffect(() => {
-    if (chatViewCollection.length === 0) {
-      dispatch(fetchChatViews());
-    }
-  }, [dispatch, chatViewCollection.length]);
-
-  useEffect(() => {
     if (chatId) {
       dispatch(fetchMessages(chatId));
     }
@@ -44,15 +38,24 @@ export default function ChatViewScreen() {
   useEffect(() => {
     if (!chatId) return;
 
+    let isSubscribed = true;
+
     socketService.connect().then(() => {
-      socketService.subscribeToChat(chatId);
+      if (isSubscribed) {
+        socketService.subscribeToChat(chatId);
+      }
+    }).catch((error) => {
+      console.error("Failed to connect to WebSocket:", error);
     });
 
     const unsubscribe = socketService.onMessage((message: Message) => {
-      dispatch(addMessage({ id: chatId, message }));
+      if (isSubscribed) {
+        dispatch(addMessage({ id: chatId, message }));
+      }
     });
 
     return () => {
+      isSubscribed = false;
       unsubscribe();
     };
   }, [chatId, dispatch]);
@@ -60,22 +63,16 @@ export default function ChatViewScreen() {
   useFocusEffect(
     useCallback(() => {
       if (chatId) {
+        dispatch(setCurrentlyDisplayedChatView(chatId));
         dispatch(markChatAsRead(chatId));
       }
+      
+      return () => {
+        dispatch(setCurrentlyDisplayedChatView(null));
+      };
     }, [chatId, dispatch])
   );
 
-  useEffect(() => {
-    if (messages.length > 0 && flatListRef.current) {
-      setTimeout(() => {
-        flatListRef.current?.scrollToIndex({ 
-          index: 0, 
-          animated: true,
-          viewPosition: 0
-        });
-      }, 100);
-    }
-  }, [messages.length]);
 
   const handleSend = async () => {
     if (!inputMessage.trim() || sending) return;
@@ -99,14 +96,6 @@ export default function ChatViewScreen() {
         chatViewId: chatId, 
         text: messageText
       })).unwrap();
-      
-      setTimeout(() => {
-        flatListRef.current?.scrollToIndex({ 
-          index: 0, 
-          animated: true,
-          viewPosition: 0
-        });
-      }, 100);
     } catch (error) {
       console.error("Failed to send message:", error);
     } finally {

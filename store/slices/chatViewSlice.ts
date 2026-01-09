@@ -1,24 +1,8 @@
 import { createAsyncThunk, createSlice, createSelector } from '@reduxjs/toolkit';
 import api from '../../services/api';
 import type { RootState } from '../store';
+import { ChatView } from '@/types/chatViewSliceTypes';
 
-export interface Message {
-  id?: string;
-  text: string;
-  senderName: string;
-  senderUid: string;
-  createdAt?: string | number;
-}
-
-export interface ChatView {
-  id: string;
-  title: string;
-  isLoading: boolean;
-  messages: Message[];
-  error: string | null;
-  lastSeenTimestamp?: number;
-  unreadCount?: number;
-}
 
 /**
  * Async thunk to fetch all chat views.
@@ -50,27 +34,14 @@ export const sendMessage = createAsyncThunk(
     { rejectWithValue, getState }
   ) => {
     try {
-      console.log('📤 Sending message to chatViewId:', chatViewId);
-      
-      // Log Redux auth state for debugging
-      const state = getState() as any;
-      console.log('Auth state:', {
-        hasToken: !!state.auth.token,
-        userUid: state.auth.user.uid,
-        userName: state.auth.user.name
-      });
-      
-      // Include createdAt timestamp as backend expects it
       const messagePayload = {
         text,
         createdAt: new Date().toISOString()
       };
       
       const response = await api.post(`/chatviews/${chatViewId}/messages`, messagePayload);
-      console.log('✅ Message sent successfully:', response.data);
       return { chatViewId, message: response.data };
     } catch (error: unknown) {
-      // Enhanced error logging for debugging 403 and other errors
       const axiosError = error as any;
       console.error('❌ Error sending message:', {
         status: axiosError.response?.status,
@@ -142,23 +113,6 @@ export const fetchMessages = createAsyncThunk(
   }
 );
 
-// Unused for now, left for future use
-/*
-const _fetchChatViews = createAsyncThunk(
-  'chatView/fetchChatViews',
-  async () => {
-    try {
-      const response = await api.get('/chatViews');
-      if(response.status === 200) {
-        return response.data;
-      }
-    }catch (error) {
-      console.error("error fetching chatViews:", error)
-    }
-  }
-)
-*/
-
 /**
  * Redux slice for managing chat view state.
  * Handles a collection of chat views, each containing messages, loading state, and error state.
@@ -171,10 +125,14 @@ const chatViewSlice = createSlice({
     initialState: {
         chatViewCollection: [] as ChatView[],
         isLoadingChatViews: false,
+        currentlyDisplayedChatView: null as string | null,
         chatViewsError: null as string | null,
         userAvatars: {} as Record<string, string>,
     },
     reducers: {
+        setCurrentlyDisplayedChatView: (state, action) => {
+            state.currentlyDisplayedChatView = action.payload;
+        },
         setMessages: (state, action) => {
             const { id, messages } = action.payload;
             const view = state.chatViewCollection.find(v => v.id === id);
@@ -184,7 +142,9 @@ const chatViewSlice = createSlice({
         },
         addMessage: (state, action) => {
             const { id, message } = action.payload;
-            const view = state.chatViewCollection.find(v => v.id === id);
+            const chatId = id || message.chatViewId;
+            const view = state.chatViewCollection.find(v => v.id === chatId);
+            
             if (view) {
                 // Prevent duplicate messages
                 const isDuplicate = view.messages.some(
@@ -193,8 +153,6 @@ const chatViewSlice = createSlice({
                 );
                 if (!isDuplicate) {
                     view.messages.push(message);
-                    // Increment unread count if user is not viewing this chat
-                    view.unreadCount = (view.unreadCount || 0) + 1;
                 }
             }
         },
@@ -204,6 +162,13 @@ const chatViewSlice = createSlice({
             if (view) {
                 view.unreadCount = 0;
                 view.lastSeenTimestamp = Date.now();
+            }
+        },
+        incrementUnreadCount: (state, action) => {
+            const chatId = action.payload;
+            const view = state.chatViewCollection.find(v => v.id === chatId);
+            if (view) {
+                view.unreadCount = (view.unreadCount || 0) + 1;
             }
         },
         addChatView: (state, action) => {
@@ -233,21 +198,27 @@ const chatViewSlice = createSlice({
           })
           .addCase(fetchChatViews.fulfilled, (state, action) => {
               state.isLoadingChatViews = false;
-              // Map the backend response to ensure each chat view has required fields
               state.chatViewCollection = action.payload.map((chatView: any) => {
-                  // Store user avatars for this chat view
                   if (chatView.userAvatars) {
                       Object.entries(chatView.userAvatars).forEach(([userId, avatarUrl]) => {
                           state.userAvatars[userId] = avatarUrl as string;
                       });
                   }
+                  
+                  const messages = [];
+                  if (chatView.lastMessage) {
+                      messages.push(chatView.lastMessage);
+                  } else if (chatView.messages && chatView.messages.length > 0) {
+                      messages.push(...chatView.messages);
+                  }
+                  
                   return {
                       id: chatView.id,
                       title: chatView.name || chatView.title || 'Untitled Chat',
                       isLoading: false,
-                      messages: [],
+                      messages: messages,
                       error: null,
-                      unreadCount: 0,
+                      unreadCount: chatView.unreadCount || 0,
                       lastSeenTimestamp: Date.now()
                   };
               });
@@ -262,7 +233,6 @@ const chatViewSlice = createSlice({
               const chatViewId = action.meta.arg;
               let view = state.chatViewCollection.find(v => v.id === chatViewId);
               if (!view) {
-                  // Create a placeholder chat view if it doesn't exist
                   view = {
                       id: chatViewId,
                       title: 'Loading...',
@@ -303,7 +273,6 @@ const chatViewSlice = createSlice({
               const { chatViewId, message } = action.payload;
               const view = state.chatViewCollection.find(v => v.id === chatViewId);
               if (view && message) {
-                  // Check if message already exists (from WebSocket)
                   const exists = view.messages.some(m => m.id === message.id);
                   if (!exists) {
                       view.messages.push(message);
@@ -315,9 +284,9 @@ const chatViewSlice = createSlice({
     }
 });
 
-export const { setMessages, addMessage, markChatAsRead, addChatView, addUserAvatars } = chatViewSlice.actions;
+export const { setCurrentlyDisplayedChatView, setMessages, addMessage, markChatAsRead, incrementUnreadCount, addChatView, addUserAvatars } = chatViewSlice.actions;
+export type { Message, ChatView } from '@/types/chatViewSliceTypes';
 
-// Selector to get chats sorted by most recent message
 export const selectSortedChats = createSelector(
   [(state: RootState) => state.chatView.chatViewCollection],
   (chats) => {
@@ -329,7 +298,6 @@ export const selectSortedChats = createSelector(
         ? b.messages[b.messages.length - 1] 
         : null;
       
-      // If both have messages, sort by createdAt (newest first)
       if (aLastMessage && bLastMessage) {
         const aTime = aLastMessage.createdAt 
           ? new Date(aLastMessage.createdAt).getTime() 
@@ -339,12 +307,10 @@ export const selectSortedChats = createSelector(
           : 0;
         return bTime - aTime; // Descending order (newest first)
       }
-      
-      // Chats with messages come before chats without
+
       if (aLastMessage && !bLastMessage) return -1;
       if (!aLastMessage && bLastMessage) return 1;
       
-      // Both have no messages, maintain current order
       return 0;
     });
   }
