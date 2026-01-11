@@ -1,17 +1,34 @@
 import { router } from "expo-router";
 import { useEffect } from "react";
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, ActivityIndicator } from "react-native";
+import { useAppDispatch } from "@/store/hooks";
+import { validateToken } from "@/store/slices/authSlice";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { styles } from "@/styles/index.styles";
 
 export default function Index() {
-  useEffect(() => {
-    // TODO: Check if user is authenticated
-    // For now, redirect to login after 1 second
-    const timeout = setTimeout(() => {
-      router.replace("/login");
-    }, 1000);
+  const dispatch = useAppDispatch();
 
-    return () => clearTimeout(timeout);
-  }, []);
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const token = await AsyncStorage.getItem('accessToken');
+        if (token) {
+          await dispatch(validateToken()).unwrap();
+          router.replace("/(tabs)/chats");
+        } else {
+          router.replace("/auth/login");
+        }
+      } catch (error) {
+        console.error("Token validation failed:", error);
+        await AsyncStorage.removeItem('accessToken');
+        await AsyncStorage.removeItem('refreshToken');
+        router.replace("/auth/login");
+      }
+    };
+
+    checkAuth();
+  }, [dispatch]);
 
   return (
     <View style={styles.container}>
@@ -20,18 +37,3 @@ export default function Index() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#1a1a1a",
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "white",
-    marginBottom: 20,
-  },
-});

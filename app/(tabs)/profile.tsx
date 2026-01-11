@@ -1,32 +1,61 @@
 import { router } from "expo-router";
-import { useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  Image,
-} from "react-native";
+import { useState, useEffect } from "react";
+import { View, Text, TouchableOpacity, ScrollView, Image, Alert, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { styles } from "../styles/profile.styles";
+import { styles } from "../../styles/profile.styles";
 import AvatarModal from "../../components/AvatarModal";
+import { handleLogout, setAvatar } from "@/store/slices/authSlice";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import api from "@/services/api";
 
 export default function ProfileScreen() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  // TODO: Get user data from auth context/store
-  const user = {
-    name: "Username",
-    email: "user@example.com"
-  };
+  const [loading, setLoading] = useState(false);
+  const user = useAppSelector((state) => state.auth.user);
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      try {
+        const response = await api.get('/user/avatar');
+        if (response.data?.avatarLink) {
+          setAvatarUrl(response.data.avatarLink);
+          dispatch(setAvatar(response.data.avatarLink));
+        }
+      } catch (error: any) {
+        // Silent error for missing avatars
+      }
+    };
+
+    if (user.uid) {
+      if (user.avatarLink) {
+        setAvatarUrl(user.avatarLink);
+      } else {
+        fetchAvatar();
+      }
+    }
+  }, [user.uid, user.avatarLink, dispatch]);
 
   const handleAvatarPress = () => {
     setModalVisible(true);
   };
 
-  const handleAvatarSave = (uri: string) => {
-    setAvatarUrl(uri);
-    // TODO: Upload to backend
+  const handleAvatarSave = async (uri: string) => {
+    setLoading(true);
+    try {
+      await api.patch('/user/avatar', { avatarLink: uri });
+      setAvatarUrl(uri);
+      dispatch(setAvatar(uri));
+      Alert.alert("Success", "Avatar updated successfully!");
+    } catch (error: any) {
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Failed to update avatar. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -56,8 +85,13 @@ export default function ProfileScreen() {
                 <TouchableOpacity 
                   style={styles.cameraButton}
                   onPress={handleAvatarPress}
+                  disabled={loading}
                 >
-                  <Ionicons name="camera" size={20} color="white" />
+                  {loading ? (
+                    <ActivityIndicator size="small" color="white" />
+                  ) : (
+                    <Ionicons name="camera" size={20} color="white" />
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -79,9 +113,13 @@ export default function ProfileScreen() {
 
             <TouchableOpacity 
               style={styles.logoutButton}
-              onPress={() => {
-                // TODO: Implement logout logic (clear tokens, etc.)
-                router.replace("/login");
+              onPress={async () => {
+                try {
+                  await dispatch(handleLogout()).unwrap();
+                  router.replace("/auth/login");
+                } catch (error) {
+                  router.replace("/auth/login");
+                }
               }}
             >
               <Ionicons name="log-out-outline" size={24} color="#ff4444" />

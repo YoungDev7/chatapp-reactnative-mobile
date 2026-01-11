@@ -1,0 +1,128 @@
+import { StyleSheet } from "react-native";
+
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#1f1f1f",
+  },
+  list: {
+    paddingHorizontal: 16,
+  },
+  chatItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    paddingVertical: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 4,
+    marginBottom: 8,
+  },
+  chatItemUnread: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#1976d2",
+    backgroundColor: "rgba(25, 118, 210, 0.15)",
+  },
+  chatIcon: {
+    marginRight: 12,
+  },
+  chatInfo: {
+    flex: 1,
+  },
+  chatTitle: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  chatTitleUnread: {
+    fontWeight: "700",
+  },
+  lastMessage: {
+    color: "rgba(255, 255, 255, 0.6)",
+    fontSize: 14,
+    fontWeight: "400",
+  },
+  lastMessageUnread: {
+    fontWeight: "600",
+    color: "rgba(255, 255, 255, 0.85)",
+  },
+  emptyContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
+  },
+  emptyText: {
+    color: "rgba(255, 255, 255, 0.5)",
+    fontSize: 14,
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: "#1f1f1f",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 16,
+  },
+  loadingText: {
+    color: "rgba(255, 255, 255, 0.7)",
+    fontSize: 16,
+  },
+  errorContainer: {
+    backgroundColor: "rgba(255, 68, 68, 0.1)",
+    marginHorizontal: 16,
+    marginBottom: 8,
+    padding: 16,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "rgba(255, 68, 68, 0.3)",
+    alignItems: "center",
+  },
+  errorText: {
+    color: "#ff4444",
+    fontSize: 14,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  retryButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: "#1976d2",
+    borderRadius: 4,
+  },
+  retryText: {
+    color: "white",
+    fontWeight: "600",
+  },
+  fab: {
+    position: "absolute",
+    right: 16,
+    bottom: 16,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#1976d2",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  unreadBadge: {
+    backgroundColor: "#1976d2",
+    borderRadius: 12,
+    minWidth: 24,
+    height: 24,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 6,
+  },
+  unreadBadgeText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+});

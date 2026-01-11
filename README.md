@@ -1,26 +1,37 @@
 # Chat Application - Mobile
 
-A cross-platform mobile chat application built with React Native and Expo. Features JWT authentication, real-time messaging via WebSocket, and a modern mobile-first design with native platform capabilities.
+A cross-platform mobile chat application built with React Native and Expo. Features JWT authentication, real-time messaging, Material Design 3 UI components, and a modern mobile-first design with native platform capabilities.
 
 ## 🚀 Technologies Used
 
-- **React Native** - Cross-platform mobile framework
-- **Expo SDK 54** - Development platform and tools
-- **Expo Router 6** - File-based navigation
-- **TypeScript** - Type-safe development
+- **React Native 0.76+** - Cross-platform mobile framework
+- **Expo SDK 52** - Development platform with managed workflow
+- **TypeScript 5.x** - Type-safe development
+- **Expo Router 4.x** - File-based navigation system
+- **React Native Paper 5.x** - Material Design 3 UI components
+- **Redux Toolkit** - Centralized state management
+- **AsyncStorage** - Local data persistence
+- **Axios** - HTTP client for API calls
+- **SockJS + STOMP.js** - WebSocket real-time messaging
 - **Expo Image Picker** - Camera and photo library access
-- **Ionicons** - Native-looking icons
+- **Ionicons** - Vector icon library
 
 ## 📋 Features
 
-- User registration and login with JWT authentication
+- JWT-based authentication (login, register, token refresh)
 - Real-time messaging via WebSocket/STOMP
-- Tab-based navigation (Chats, Profile)
-- User profile with avatar upload
+- Chat list with search and sorting by recent messages
+- Material Design 3 UI with dark theme
+- User profile management with avatar upload
 - Camera and photo library integration
-- Chat list with search functionality
-- Splash screen with auto-redirect
-- Type-safe codebase with TypeScript
+- Message features:
+  - User messages (right, blue) vs others (left, gray)
+  - Avatar display with initials fallback
+  - Large emoji display (≤3 emojis at 48px)
+  - Timestamps above each message
+  - Auto-scroll to newest messages
+- Unread message indicators
+- Tab-based navigation (Chats, Profile)
 - Cross-platform support (iOS, Android, Web)
 
 ## 🏗️ Project Structure
@@ -29,18 +40,40 @@ A cross-platform mobile chat application built with React Native and Expo. Featu
 app/
 ├── (tabs)/                      # Tab-based screens (protected)
 │   ├── _layout.tsx             # Tab navigation layout
-│   ├── index.tsx               # Chats list screen
+│   ├── index.tsx               # Chats list screen (chats.tsx)
 │   └── profile.tsx             # User profile screen
-├── styles/
-│   └── profile.styles.ts       # Profile screen styles
+├── chat/
+│   └── [chatId].tsx            # Dynamic chat view screen
 ├── _layout.tsx                 # Root navigation layout
 ├── index.tsx                   # Splash/loading screen
 ├── login.tsx                   # Login screen
 └── register.tsx                # Registration screen
 
 components/
-├── AvatarModal.tsx             # Photo upload modal
-└── AvatarModal.styles.ts       # Avatar modal styles
+├── chat/
+│   ├── ChatInput.tsx           # Message input component
+│   └── ChatMessage.tsx         # Message display component
+├── styles/
+│   ├── ChatInput.styles.ts    # Chat input styles
+│   └── profile.styles.ts      # Profile screen styles
+└── AvatarModal.tsx            # Photo upload modal
+
+services/
+├── authService.ts              # Authentication API calls
+├── chatService.ts              # Chat and messaging API calls
+└── storageService.ts           # AsyncStorage wrapper
+
+styles/
+├── chatView.styles.ts          # Chat view screen styles
+└── index.css                   # Global styles
+
+types/
+├── chatMessage.ts              # Message type definitions
+└── custom.d.ts                 # Custom type declarations
+
+utils/
+├── chatHelpers.ts              # Chat utility functions
+└── emojiHelper.ts              # Emoji detection and validation
 
 Configuration Files:
 ├── app.json                    # Expo configuration
@@ -52,67 +85,103 @@ Configuration Files:
 ## 🛠️ Installation & Setup
 
 ### Prerequisites
-
 - Node.js (v22 or higher)
 - npm or yarn
-- Expo CLI (`npm install -g expo-cli`)
-- iOS Simulator (Mac only) or Android Studio (for emulators)
-- Expo Go app (for physical device testing)
+- Expo CLI
+- iOS Simulator (macOS) or Android Studio (for emulators)
+- Expo Go app (for physical devices)
 
 ### Development Setup
 
-1. **Clone the repository structure**
-
+1. **Clone repository**
    ```bash
-   # Create parent directory
-   mkdir chat-application
-   cd chat-application
-
-   # Clone all repositories
    git clone <mobile-repository-url> chatapp-reactnative-mobile
-   git clone <frontend-repository-url> chatapp-react-frontend
-   git clone <backend-repository-url> chatapp-spring-backend
+   cd chatapp-reactnative-mobile
    ```
 
 2. **Install dependencies**
-
    ```bash
-   cd chatapp-reactnative-mobile
    npm install
    ```
 
-3. **Environment Configuration**
-
-   ```bash
-   # Copy example environment file (if available)
-   cp .env.example .env
-   ```
-
-   Configure the following variables in `.env`:
-
-   ```env
-   EXPO_PUBLIC_API_BASE_URL=http://localhost:8080/api/v1
-   EXPO_PUBLIC_WS_BASE_URL=http://localhost:8080/ws
+3. **Configure environment**
+   
+   Create `config/api.ts` or use environment variables:
+   ```typescript
+   export const API_CONFIG = {
+     BASE_URL: 'http://localhost:8080/api/v1',
+     WS_URL: 'http://localhost:8080/ws'
+   };
    ```
 
 4. **Start development server**
-
    ```bash
    npx expo start
    ```
 
-5. **Run on different platforms**
-   - Press `w` to open in web browser
-   - Press `i` to open in iOS Simulator (Mac only)
-   - Press `a` to open in Android Emulator
-   - Scan QR code with Expo Go app on your physical device
+5. **Run on platform**
+   - Press `w` for web browser
+   - Press `i` for iOS Simulator (macOS only)
+   - Press `a` for Android Emulator
+   - Scan QR code with Expo Go for physical device
 
-### Verify Installation
+## 📱 Testing on iOS Simulator (macOS Only)
 
-- Web: `http://localhost:8081`
-- iOS Simulator: Press `i` in terminal
-- Android Emulator: Press `a` in terminal
-- Physical Device: Scan QR code with Expo Go
+### Quick Start
+
+1. **Install Xcode**
+   ```bash
+   xcode-select --install
+   sudo xcodebuild -license accept
+   ```
+
+2. **Launch Simulator**
+   ```bash
+   npx expo start
+   # Press 'i' to open iOS Simulator
+   ```
+
+### Common Shortcuts
+- **Reload**: Cmd+R
+- **Developer Menu**: Cmd+D or Cmd+Ctrl+Z
+- **Rotate Device**: Cmd+Left/Right Arrow
+- **Toggle Keyboard**: Cmd+K
+- **Home Button**: Cmd+Shift+H
+
+### Testing Features
+- **Photo Library**: Drag & drop images into simulator
+- **Camera**: Not available (requires physical device)
+- **Push Notifications**: Use Expo push tool
+- **Debug Logs**: `npx react-native log-ios`
+
+### Troubleshooting
+```bash
+# Clear cache
+npx expo start --clear
+
+# Reset simulator
+xcrun simctl erase all
+```
+
+## 🏛️ Architecture
+
+### Application Layers
+```
+React Native (JS/TS) → Expo Framework → Native Bridge → iOS/Android/Web
+```
+
+### Design Patterns
+- **Flux/Redux** - Unidirectional data flow for state management
+- **Component Composition** - Reusable UI components
+- **File-based Routing** - Convention over configuration
+- **Service Layer** - Separated business logic and API calls
+
+### Why Expo + React Native?
+- ✅ Single codebase for iOS, Android, Web
+- ✅ Fast development with hot reload
+- ✅ Large ecosystem and community
+- ✅ OTA updates without app store
+- ✅ Strong TypeScript support
 
 ## 🔧 Configuration
 
@@ -148,154 +217,67 @@ File-based routing with Expo Router:
 5. Navigate to protected tab screens
 6. Automatic token refresh on expiration
 
-## 💬 Real-time Messaging (Planned)
+## 💬 Messaging & Real-time
 
-The application will use WebSocket/STOMP for real-time communication:
+- **Message Fetching**: REST API `GET /chatviews/{id}/messages`
+- **Message Sending**: REST API `POST /chatviews/{id}/messages` + WebSocket broadcast
+- **Real-time Updates**: WebSocket/STOMP subscription to `/topic/chatview/{chatId}`
+- **Optimistic Updates**: Messages shown instantly before server confirmation
+- **Auto-scroll**: Inverted FlatList with newest messages at bottom
 
-- Connection setup on app launch
-- Messages sent to `/app/chat` endpoint
-- Real-time updates received from `/topic/messages`
-- Automatic reconnection on network changes
+## 🔗 Backend Integration
 
-## 📱 Key Features
+### API Endpoints
+- `POST /auth/register` - User registration
+- `POST /auth/authenticate` - User login (returns JWT)
+- `GET /chatviews` - List user's chats
+- `GET /chatviews/{id}/messages` - Fetch messages
+- `POST /chatviews/{id}/messages` - Send message
+- `GET /users/me` - Get current user
+- `PATCH /user/avatar` - Update avatar
 
-### Profile Screen
-
-Located in [`app/(tabs)/profile.tsx`](<app/(tabs)/profile.tsx>):
-
-- User information display
-- Avatar with photo upload capability
-- Profile editing (in progress)
-- Logout functionality
-
-### Avatar Upload Modal
-
-Component in [`components/AvatarModal.tsx`](components/AvatarModal.tsx):
-
-- Camera capture with expo-image-picker
-- Photo library selection
-- Image preview before save
-- Permission handling for camera and media library
-- Image cropping (square aspect ratio)
-
-### Chat List
-
-Located in [`app/(tabs)/index.tsx`](<app/(tabs)/index.tsx>):
-
-- Search functionality
-- Real-time chat updates
-- Mock data structure ready for backend integration
-- Pull-to-refresh support
-
-## 🎨 Styling
-
-- **StyleSheet API** - React Native styling system
-- **Separate style files** - Component-specific `.styles.ts` files
-- **Dark theme** - Consistent dark color scheme
-  - Main background: `#1a1a1a`
-  - Secondary background: `#2a2a2a`
-  - Accent color: `#0066FF`
-  - Text: `#ffffff`
-- **Responsive design** - Adapts to different screen sizes
-
-## 📋 Dependencies
-
-### Production Dependencies
-
-- `expo` - Expo framework (v54)
-- `expo-router` - File-based navigation (v6)
-- `react-native` - React Native framework
-- `expo-image-picker` - Camera and photo library access
-- `@expo/vector-icons` - Icon library
-- `react-native-safe-area-context` - Safe area handling
-- `react-native-screens` - Native navigation primitives
-
-### Development Dependencies
-
-- `typescript` - TypeScript compiler
-- `@babel/core` - JavaScript compiler
-- `eslint` - Code linting
-- Various type definitions (`@types/*`)
+### WebSocket
+- **Connect**: `ws://localhost:8080/ws?token=<JWT>`
+- **Subscribe**: `/topic/chatview/{chatId}` - Receive messages
+- **Send**: `/app/chatview/{chatId}` - Send message
 
 ## 🚀 Deployment
 
-### Build for Production
-
-#### iOS
+### Production Builds
 
 ```bash
-# Development build
-eas build --platform ios --profile development
-
-# Production build
+# iOS
 eas build --platform ios --profile production
-```
 
-#### Android
-
-```bash
-# Development build
-eas build --platform android --profile development
-
-# Production build (APK)
+# Android
 eas build --platform android --profile production
-```
 
-#### Web
-
-```bash
+# Web
 npm run build
 npx serve dist
 ```
 
-### App Stores
-
-- **Apple App Store**: Follow iOS build process and submit via App Store Connect
-- **Google Play Store**: Generate signed APK/AAB and submit via Play Console
-
 ## 🐛 Troubleshooting
 
+```bash
+# Clear Metro cache
+npx expo start --clear
+
+# Clear npm cache and reinstall
+npm cache clean --force
+rm -rf node_modules && npm install
+
+# View iOS logs
+npx react-native log-ios
+
+# View Android logs
+npx react-native log-android
+```
+
 ### Common Issues
-
-1. **Metro bundler cache issues**
-
-   ```bash
-   npx expo start --clear
-   ```
-
-2. **iOS Simulator not opening**
-
-   - Ensure Xcode is installed (Mac only)
-   - Check Xcode command line tools: `xcode-select --install`
-
-3. **Android Emulator issues**
-
-   - Verify Android Studio installation
-   - Check emulator is running: `adb devices`
-
-4. **Module resolution errors**
-
-   - Clear npm cache: `npm cache clean --force`
-   - Delete node_modules and reinstall: `rm -rf node_modules && npm install`
-
-5. **Image picker permissions**
-   - Check app permissions in device settings
-   - Ensure permission requests are in app.json
-
-### Debug Mode
-
-Enable remote debugging:
-
-- Shake device/emulator to open developer menu
-- Select "Debug Remote JS"
-- Or press `j` in Expo terminal
-
-## 📚 Documentation
-
-Additional documentation available in related repositories:
-
-- [Backend Documentation](https://github.com/YoungDev7/chatapp-spring-backend) - API integration guides
-- [Frontend Documentation](https://github.com/YoungDev7/chatapp-react-frontend) - Web UI patterns
+- **iOS Simulator not opening**: `xcode-select --install`
+- **Android Emulator issues**: Check `adb devices`
+- **Permission errors**: Check app permissions in device settings
 
 ## 🔗 Related Projects
 
