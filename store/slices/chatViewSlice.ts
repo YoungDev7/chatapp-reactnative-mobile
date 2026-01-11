@@ -133,13 +133,31 @@ const chatViewSlice = createSlice({
             const view = state.chatViewCollection.find(v => v.id === chatId);
             
             if (view) {
-                // Prevent duplicate messages
+                // Prevent duplicate messages - check by id first, then by content match
                 const isDuplicate = view.messages.some(
-                    m => m.id === message.id || 
-                    (m.text === message.text && m.senderUid === message.senderUid && m.createdAt === message.createdAt)
+                    m => {
+                        // If both have non-temp IDs, compare by ID
+                        if (m.id && message.id && !m.id.startsWith('temp-') && !message.id.startsWith('temp-')) {
+                            return m.id === message.id;
+                        }
+                        // Otherwise compare by content (handles temp message matching real message)
+                        return m.text === message.text && 
+                               m.senderUid === message.senderUid && 
+                               Math.abs(new Date(m.createdAt || 0).getTime() - new Date(message.createdAt || 0).getTime()) < 5000;
+                    }
                 );
                 if (!isDuplicate) {
                     view.messages.push(message);
+                } else if (message.id && !message.id.startsWith('temp-')) {
+                    // Replace temp message with real message if it exists
+                    const tempIndex = view.messages.findIndex(
+                        m => m.id?.startsWith('temp-') && 
+                             m.text === message.text && 
+                             m.senderUid === message.senderUid
+                    );
+                    if (tempIndex !== -1) {
+                        view.messages[tempIndex] = message;
+                    }
                 }
             }
         },

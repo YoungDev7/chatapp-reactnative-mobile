@@ -38,27 +38,17 @@ export default function ChatViewScreen() {
   useEffect(() => {
     if (!chatId) return;
 
-    let isSubscribed = true;
-
-    socketService.connect().then(() => {
-      if (isSubscribed) {
+    const subscribeToChat = async () => {
+      try {
+        await socketService.connect();
         socketService.subscribeToChat(chatId);
+      } catch (error) {
+        console.error("Failed to connect to WebSocket:", error);
       }
-    }).catch((error) => {
-      console.error("Failed to connect to WebSocket:", error);
-    });
-
-    const unsubscribe = socketService.onMessage((message: Message) => {
-      if (isSubscribed) {
-        dispatch(addMessage({ id: chatId, message }));
-      }
-    });
-
-    return () => {
-      isSubscribed = false;
-      unsubscribe();
     };
-  }, [chatId, dispatch]);
+
+    subscribeToChat();
+  }, [chatId]);
 
   useFocusEffect(
     useCallback(() => {

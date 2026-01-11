@@ -118,7 +118,6 @@ export default function ProfileScreen() {
                   await dispatch(handleLogout()).unwrap();
                   router.replace("/auth/login");
                 } catch (error) {
-                  // Silent error handling
                   router.replace("/auth/login");
                 }
               }}

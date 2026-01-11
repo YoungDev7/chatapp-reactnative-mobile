@@ -2,6 +2,8 @@ import { Stack } from "expo-router";
 import { store } from "../store/store";
 import { PaperProvider, MD3DarkTheme } from "react-native-paper";
 import { Provider } from "react-redux";
+import { useEffect } from "react";
+import notificationService from "../services/notificationService";
 
 const theme = {
   ...MD3DarkTheme,
@@ -12,18 +14,35 @@ const theme = {
     surface: "#1f1f1f",
   },
 };
+
+function RootLayoutContent() {
+  useEffect(() => {
+    notificationService.initialize().catch((error) => {
+      console.error("Failed to initialize notifications:", error);
+    });
+
+    return () => {
+      notificationService.cleanup();
+    };
+  }, []);
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="auth/login" />
+      <Stack.Screen name="auth/register" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="chat/[chatId]" options={{ headerShown: true }} />
+      <Stack.Screen name="chat/new" options={{ headerShown: true }} />
+    </Stack>
+  );
+}
+
 export default function RootLayout() {
   return (
     <Provider store={store}>
       <PaperProvider theme={theme}>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="auth/login" />
-            <Stack.Screen name="auth/register" />
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="chat/[chatId]" options={{ headerShown: true }} />
-            <Stack.Screen name="chat/new" options={{ headerShown: true }} />
-          </Stack>
+        <RootLayoutContent />
       </PaperProvider>
     </Provider>
   );

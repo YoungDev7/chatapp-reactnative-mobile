@@ -9,46 +9,64 @@ class SocketService {
   private subscribedChats: Set<string> = new Set();
   private messageCallbacks: ((message: Message) => void)[] = [];
   private isConnecting = false;
+  private connectionPromise: Promise<void> | null = null;
 
   async connect(): Promise<void> {
-    if (this.stompClient?.connected || this.isConnecting) {
-      return;
+    if (this.stompClient?.connected) {
+      return Promise.resolve();
+    }
+
+    if (this.connectionPromise) {
+      return this.connectionPromise;
     }
 
     this.isConnecting = true;
 
-    try {
-      const token = await AsyncStorage.getItem('accessToken');
-      if (!token) {
-        this.isConnecting = false;
-        return;
-      }
-
-      const socket = new SockJS(`${API_CONFIG.BASE_URL.replace('/api/v1', '')}/ws`);
-      
-      this.stompClient = new Client({
-        webSocketFactory: () => socket as any,
-        connectHeaders: {
-          Authorization: `Bearer ${token}`
-        },
-        reconnectDelay: 5000,
-        heartbeatIncoming: 4000,
-        heartbeatOutgoing: 4000,
-        onConnect: (frame: Frame) => {
+    this.connectionPromise = new Promise<void>(async (resolve, reject) => {
+      try {
+        const token = await AsyncStorage.getItem('accessToken');
+        if (!token) {
           this.isConnecting = false;
-        },
-        onStompError: (frame: Frame) => {
-          this.isConnecting = false;
-        },
-        onWebSocketClose: () => {
-          this.isConnecting = false;
+          this.connectionPromise = null;
+          reject(new Error('No token available'));
+          return;
         }
-      });
 
-      this.stompClient.activate();
-    } catch (error) {
-      this.isConnecting = false;
-    }
+        const socket = new SockJS(`${API_CONFIG.BASE_URL.replace('/api/v1', '')}/ws`);
+        
+        this.stompClient = new Client({
+          webSocketFactory: () => socket as any,
+          connectHeaders: {
+            Authorization: `Bearer ${token}`
+          },
+          reconnectDelay: 5000,
+          heartbeatIncoming: 4000,
+          heartbeatOutgoing: 4000,
+          onConnect: (frame: Frame) => {
+            this.isConnecting = false;
+            resolve();
+          },
+          onStompError: (frame: Frame) => {
+            this.isConnecting = false;
+            this.connectionPromise = null;
+            reject(new Error('WebSocket connection error'));
+          },
+          onWebSocketClose: () => {
+            this.isConnecting = false;
+            this.connectionPromise = null;
+            this.subscribedChats.clear();
+          }
+        });
+
+        this.stompClient.activate();
+      } catch (error) {
+        this.isConnecting = false;
+        this.connectionPromise = null;
+        reject(error);
+      }
+    });
+
+    return this.connectionPromise;
   }
 
   subscribeToChat(chatId: string): void {
@@ -76,7 +94,6 @@ class SocketService {
   onMessage(callback: (message: Message) => void): () => void {
     this.messageCallbacks.push(callback);
     
-    // Return unsubscribe function
     return () => {
       this.messageCallbacks = this.messageCallbacks.filter(cb => cb !== callback);
     };

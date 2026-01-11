@@ -13,7 +13,6 @@ export const API_CONFIG = {
 
 // Helper to get the correct API URL based on the environment
 export const getApiUrl = () => {
-  // In production, you would use your deployed backend URL
   if (__DEV__) {
     return API_CONFIG.BASE_URL;
   }

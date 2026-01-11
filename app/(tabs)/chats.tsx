@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,17 +8,23 @@ import {
 } from "react-native";
 import { ActivityIndicator, FAB } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import SearchBar from "../../components/SearchBar";
 import { styles } from "../../styles/chats.styles";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchChatViews, fetchMessages, selectSortedChats } from "@/store/slices/chatViewSlice";
+import { store } from "@/store/store";
+import { fetchChatViews, fetchMessages, selectSortedChats, addMessage, incrementUnreadCount } from "@/store/slices/chatViewSlice";
+import socketService from "@/services/socketService";
+import notificationService from "@/services/notificationService";
+import type { Message } from "@/types/chatViewSliceTypes";
 
 export default function ChatsScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const subscribedChatIds = useRef<Set<string>>(new Set());
+  const messageUnsubscribeRef = useRef<(() => void) | null>(null);
   
   const sortedChats = useAppSelector(selectSortedChats);
   const { isLoadingChatViews, chatViewsError } = useAppSelector(
@@ -45,6 +51,78 @@ export default function ChatsScreen() {
     fetchChats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const handleMessage = (message: Message) => {
+      const chatId = message.chatViewId;
+      if (!chatId) return;
+      
+      const currentlyDisplayedChat = store.getState().chatView.currentlyDisplayedChatView;
+      
+      dispatch(addMessage({ id: chatId, message }));
+      
+      if (chatId !== currentlyDisplayedChat) {
+        dispatch(incrementUnreadCount(chatId));
+        
+        const state = store.getState();
+        const chat = state.chatView.chatViewCollection.find(c => c.id === chatId);
+        if (chat) {
+          notificationService.showNotification(
+            chat.title || 'New Message',
+            `${message.senderName}: ${message.text}`,
+            { chatId }
+          );
+        }
+      }
+    };
+
+    messageUnsubscribeRef.current = socketService.onMessage(handleMessage);
+
+    return () => {
+      if (messageUnsubscribeRef.current) {
+        messageUnsubscribeRef.current();
+        messageUnsubscribeRef.current = null;
+      }
+    };
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (sortedChats.length === 0) return;
+
+    const subscribeToChats = async () => {
+      try {
+        await socketService.connect();
+      
+        sortedChats.forEach(chat => {
+          if (!subscribedChatIds.current.has(chat.id)) {
+            socketService.subscribeToChat(chat.id);
+            subscribedChatIds.current.add(chat.id);
+          }
+        });
+      } catch (error) {
+        console.error("Failed to setup WebSocket connections:", error);
+      }
+    };
+
+    subscribeToChats();
+  }, [sortedChats]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const reconnect = async () => {
+        try {
+          await socketService.connect();
+          subscribedChatIds.current.forEach(chatId => {
+            socketService.subscribeToChat(chatId);
+          });
+        } catch (error) {
+          console.error("Failed to reconnect:", error);
+        }
+      };
+      
+      reconnect();
+    }, [])
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -78,14 +156,14 @@ export default function ChatsScreen() {
         <View style={styles.chatInfo}>
           <Text style={[
             styles.chatTitle,
-            hasUnread && styles.chatTitleUnread
+            hasUnread && { fontWeight: 'bold' }
           ]}>
             {item.title || 'Untitled Chat'}
           </Text>
           {lastMessage ? (
             <Text style={[
               styles.lastMessage,
-              hasUnread && styles.lastMessageUnread
+              hasUnread && { fontWeight: 'bold' }
             ]} numberOfLines={1}>
               {senderDisplayName}: {lastMessage.text}
             </Text>
@@ -95,6 +173,11 @@ export default function ChatsScreen() {
             </Text>
           )}
         </View>
+        {hasUnread && (
+          <View style={styles.unreadBadge}>
+            <Text style={styles.unreadBadgeText}>{item.unreadCount}</Text>
+          </View>
+        )}
       </TouchableOpacity>
     );
   };
